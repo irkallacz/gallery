@@ -1,0 +1,29 @@
+{templateType App\Template\AlbumTemplate}
+
+{block head}
+	<link rel="stylesheet" href="{$baseUrl}/assets/app.photo.bundle.css" type="text/css">
+	<style n:syntax="off">
+		.dropzone { background: gray; }
+        .dropzone .dz-preview.dz-image-preview { background-color: inherit;}
+	</style>
+{/block}
+
+{block scripts}
+	<script src="{$baseUrl}/js/dropzone.js" type="application/javascript"></script>
+{/block}
+
+{block content}
+
+<h2 n:block="title">{$album->title}</h2>
+
+<p>Fotky, které chcete nahrát, přesuňtě na zvýrazněnou oblast níže, nebo klikem na ní fotky vyberte ze svého zařízení. Nahrávání se spustí automaticky.
+	Fotografie se automaticky otáčejí.</p>
+
+<p>Až bude celé nahrávání dokončeno, můžete se vrátit na stránku alba pomocí odkazu <b>Zpět na album</b>.</p>
+
+<div id="content">
+	<div id="photoUpload" class="dropzone" data-url="{link photoUpload!}"></div>
+</div>
+
+<p><a n:href="view $album->slug">← Zpět na album</a></p>
+{/block}

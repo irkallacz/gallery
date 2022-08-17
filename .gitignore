@@ -1,0 +1,9 @@
+.idea
+vendor
+node_modules
+log
+temp
+www/assets
+www/albums
+composer.lock
+config/local.neon

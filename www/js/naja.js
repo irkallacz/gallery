@@ -1,0 +1,1 @@
+window.naja.initialize({ history: false });

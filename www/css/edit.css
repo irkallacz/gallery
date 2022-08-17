@@ -1,0 +1,13 @@
+ul.photoList { display: flex; flex-flow: row wrap; align-content: flex-start }
+ul.photoList li { width: 150px; height: 100px; font-size: 1em; text-align: center; position: relative; margin: 3px; }
+ul.photoList li img:hover, .photoList li:hover img { border-color: #ea9419;}
+ul.photoList li.selected img { border-color: #ff5900; cursor: move;}
+ul.photoList li input.title { width: 95%; position: absolute; bottom: 0; right: 0; font-size: 0.8em; background-color: rgba(0,0,0,0.5); z-index: 2; text-align: right;}
+ul.photoList li input.selector { position: absolute; top: 0; left: 0; z-index: 2;}
+#frm-superForm label { font-weight: bold;}
+.album-name { font-size: 1.5em; font-weight: bold;}
+input.album-slug { border-color: transparent;}
+input.album-slug:focus { border-color: silver; }
+.album-text { width: 98%; font-family: Verdana,Arial,Helvetica,Calibri,sans-serif; font-size: 1em; height: 1.5em;}
+#fistrRow { line-height: 2em}
+.date { text-align: center;}

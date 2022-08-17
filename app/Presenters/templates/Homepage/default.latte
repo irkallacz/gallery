@@ -1,0 +1,74 @@
+{templateType App\Template\HomepageTemplate}
+
+{block head}
+	<link rel="stylesheet" href="{$baseUrl}/css/photo.photolist.css" type="text/css">
+	<link rel="stylesheet" href="{$baseUrl}/assets/app.photo.bundle.css" type="text/css">
+	<style>
+		.carousel__slide { text-align: center; list-style: none; }
+	</style>
+{/block}
+
+{block scripts}
+	<script type="application/javascript" src="{$baseUrl}/js/carousel.js"></script>
+{/block}
+
+{block title}Novinky{/block}
+
+{block content}
+
+	<div>
+		<ul id="showcase" class="carousel">
+			<li n:foreach="$photos as $photo" class="carousel__slide">
+				<a target="_blank" n:href="Album:view#$photo->filename $photo->album->slug"><img height="350" data-lazy-src="{$baseUrl}/albums/{$photo->album->id}/medium/{$photo->thumbname}"></a>
+			</li>
+		</ul>
+	</div>
+
+	{if $user->isLoggedIn()}
+		<h2>Novinky</h2>
+
+		{if}
+			<div id="news">
+				{if}
+					<h3>Alba</h3>
+					<ul n:inner-foreach="$newAlbums as $newAlbum">
+						<li><a target="_blank" n:href="Album:view $newAlbum->slug">{$newAlbum->title}</a></li>
+					</ul>
+				{/if isset($newAlbum)}
+
+				{if}
+					<h3>Fotografie</h3>
+					<ul>
+						<li n:foreach="$newAlbumPhotos as $newAlbumPhoto">
+							<a n:href="Album:view $newAlbumPhoto->slug">{$newAlbumPhoto->title}</a>
+							<ul>
+								<li n:foreach="$newAlbumPhoto->photos->toCollection()->findBy(['createdAt>' => $dateLast])->limitBy(15)->fetchAll() as $newPhoto">
+									<a target="_blank" n:href="Album:view#$newPhoto->filename $newAlbumPhoto->slug">{$photo->filename}</a>
+								</li>
+								<li n:if="$iterator->counter == 15">
+									<a target="_blank" n:href="Album:view $newAlbumPhoto->slug">Další ...</a>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				{/if isset($newPhoto)}
+			</div>
+		{/if isset($newAlbum) or isset($newPhoto)}
+
+		<p>Máte celkem <b>{$albumCount} alb</b> a v nich <b>{$photoCount} fotografií</b>.</p>
+	{/if}
+
+	<h2>Nejnovější alba</h2>
+
+	<div>
+		<ul id="albumList" n:inner-foreach="$albums as $album">
+			<li class="row">
+				{include photoList, album => $album}
+			</li>
+		</ul>
+	</div>
+
+	<p><a n:href="Album:default">Všechna alba →</a></p>
+
+{/block}
+

@@ -1,0 +1,51 @@
+{templateType App\Template\AlbumPhotosTemplate}
+
+{block head}
+	<link rel="stylesheet" href="{$baseUrl}/assets/app.photo.bundle.css">
+	<style n:syntax="off">
+        .photoList { display: flex; flex-flow: row wrap; align-content: flex-start }
+        .photoList li { margin: 3px; position: relative;}
+	</style>
+{/block}
+
+{block scripts}
+	<script type="application/javascript" src="{$baseUrl}/js/fancybox.js"></script>
+{/block}
+
+{block content}
+<header class="row">
+	<h2 n:block="title">{$album->title}</h2>
+
+	<nav>
+		<ul class="menu">
+			{include albumMenu album => $album}
+		</ul>
+	</nav>
+</header>
+
+<div n:if="$album->summary">{$album->summary|texy}</div>
+
+<ul class="photoList" n:inner-foreach="$photos as $photo">
+	<li n:class="(($album->public) and (!$photo->public)) ? 'hidden'">
+		<a data-fancybox="album" href="{$baseUrl}/{$originalPath}/{$photo->filename}" n:class="($album->public && (!$photo->public)) ? hidden"
+		   data-src="{$baseUrl}/{$largePath}/{$photo->thumbname}"
+		   data-srcset="{$baseUrl}/{$mediumPath}/{$photo->thumbname} 1024w, {$baseUrl}/{$largePath}/{$photo->thumbname} 1920w"
+		   data-slug="{$photo->filename}" data-caption="{$photo->summary} {if $photo->takenAt}{$photo->takenAt|datetime}{/if}">
+			<img src="{$baseUrl}/{$thumbPath}/{$photo->thumbname}" width="150" height="100" alt="{$photo->filename}">
+		</a>
+	</li>
+</ul>
+
+<div id="photoBottom">
+{include albumPopis, album => $album}
+</div>
+
+<p n:if="$album->public">
+	<a title="Sdílet na Facebook" href="https://www.facebook.com/sharer.php?u={link //this}"><img class="icon" src="{$baseUrl}/img/facebook.svg" alt="Facebook"></a>
+</p>
+
+<p>
+    <a title="Sdílet" n:href="Album:view $album->slug, $album->hash"><img class="icon" src="{$baseUrl}/img/link.svg"> Odkaz pro sdílení</a>
+</p>
+
+{/block}

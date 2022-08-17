@@ -1,0 +1,66 @@
+{templateType App\Template\AlbumTemplate}
+
+{block head}
+	<link rel="stylesheet" href="{$baseUrl}/css/edit.css">
+{/block}
+
+{block scripts}
+	<script src="{$baseUrl}/js/edit.js"></script>
+	<script src="{$baseUrl}/js/confirm.js"></script>
+{/block}
+
+{block title}{$album->title}{/block}
+
+{block content}
+	{form albumForm}
+		<div class="row">
+			<p id="fistrRow">
+				{input title class => album-name}<br>
+				{input slug class => album-slug}
+			</p>
+			<nav>
+				<ul class="menu">
+					<li n:if="$album->public">{input visible class => buttonLike}</li>
+					<li>{input delete class => "buttonLike confirm"}</li>
+					<li>{input save class => buttonLike}</li>
+				</ul>
+			</nav>
+
+		</div>
+
+		<p>{label createdBy /} {input createdBy} <span class="no-wrap">{label date /} {input date}</span></p>
+
+		<p>{input summary class => album-text}</p>
+
+		<p>{input description class => album-text}</p>
+
+		<p class="right">{input selectAll}</p>
+
+		<ul class="error" n:if="$form->hasErrors()">
+		  <li n:foreach="$form->errors as $error">{$error}</li>
+		</ul>
+
+		<ul id="edit-list" class="photoList" n:inner-foreach="$album->photos as $photo">
+			<li>
+				<label n:name="photos-$photo->id-selected" n:class="(($album->public)&&(!$photo->public)) ? 'hidden'" {if $photo->createdBy}title="Autor: {$photo->createdBy->fullName}"{/if}>
+					{include image image => $photo, class => image}
+				</label>
+				<input n:name="photos-$photo->id-selected" class="selector">
+				<div>
+					<input n:name="photos-$photo->id-summary" class="title">
+				</div>
+			</li>
+		</ul>
+	{/form}
+
+	<p><a n:href="view $album->slug">← Zpět na album</a></p>
+
+	<p>V popisu alba můžete používat <a href="http://texy.info/cs/syntax" target="_blank">Texy syntaxi</a>.<p>
+
+	<p>Výběr fotografie provedete kliknutím na ní, nemusíte klikat přímo na zaškrtávací políčko. Označené fotografie lze přesouvat a uspořádávat.</p>
+
+	<p>Jestliže mají některé Vaše fotografie ikonku <img src="{$baseUrl}/img/eye-close.svg" style="height: 1em"> nebo v menu alba vidíte položku <b>změnit viditelnost</b>
+		znamená to, že Vaše album bylo označeno jako <b>viditelné pro veřejnost</b>. <b>Ikonka <img src="{$baseUrl}/img/eye-close.svg" style="height: 1em"></b> je znamení, že tato fotografie
+	je <b>neviditelná pro veřejnost</b>.</p>
+{/block}
+

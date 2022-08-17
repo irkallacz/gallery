@@ -1,0 +1,8 @@
+services:
+	nette.latteFactory:
+		setup:
+			- addFilterLoader([App\Latte\LatteFilters(), load])
+
+	- App\Router\RouterFactory::createRouter
+	- App\Commands\TransformImagesCommand
+	- App\Photo\PhotoService(%wwwDir%, albums, %photoDimensions%)

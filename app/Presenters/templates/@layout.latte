@@ -1,0 +1,108 @@
+{**
+ * @package    MyApplication
+ *
+ * @param string   $robots   tell robots how to index the content of a page (optional)
+ * @param string   $baseUrl web base path
+ * @param array    $flashes  flash messages
+ * @param Nette\Web\User $user  current user
+ *}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="initial-scale=1, width=device-width">
+	<meta name="format-detection" content="telephone=no">
+	<link rel="shortcut icon" href="{$baseUrl}/img/vzs.ico" type="image/x-icon">
+	<link rel="icon" sizes="any" href="{$baseUrl}/img/vzs.ico.svg" type="image/svg+xml">
+	<link rel="stylesheet" href="{$baseUrl}/css/photo.css" type="text/css">
+
+	<link rel="stylesheet" href="{$baseUrl}/css/photo.mobile.css" type="text/css" media="screen and (max-width: 750px)">
+	<link rel="stylesheet" href="{$baseUrl}/css/photo.mobile.css" type="text/css" media="screen and (orientation: portrait)">
+
+	<title>{block title|stripHtml|trim}{/block} | VZS Jablonec Fotogalerie</title>
+
+	{block head}{/block}
+</head>
+<body>
+<main id="main">
+<section id="top">
+	<nav>
+		<ul id="mainMenu" n:inner-foreach="$mainMenu as $item">
+			<li n:if="(!$item->role)or($user->isInRole($item->role))" n:class="$item->current ? current">
+				<a n:href="$item->link">{$item->title}</a>
+			</li>
+		</ul>
+	</nav>
+	<header id="header">
+		<a n:href="Homepage:" title="Vzs Jablonec Fotogalerie">
+			<img src="{$baseUrl}/img/vzs.svg" alt="VZS ČČK" width="80" height="80">
+			<img src="{$baseUrl}/img/zralok.svg" alt="VZS JBC" width="80" height="80">
+		</a>
+		<h1><span></span>VZS Jablonec Fotogalerie</h1>
+	</header>
+</section>
+
+<section id="content">
+	{snippet flash}	
+	<div n:foreach="$flashes as $flash" class="flash {$flash->type}">{$flash->message}</div>
+	{/snippet}
+
+	{include content}
+</section>
+	<script type="application/javascript" src="{$baseUrl}/assets/app.photo.bundle.js"></script>
+	{block scripts}{/block}
+</main>
+</body>
+</html>
+
+{define albumMenu}
+	<li>
+		<a class="buttonLike" n:href="Album:upload $album->slug">přidat fotky</a></li>
+	<li>
+		<a class="buttonLike confirm" n:href="Album:delete $album->id" data-confirm="Opravdu chcete vymazat toto album?">smazat album</a>
+	</li>
+	<li>
+		<a class="buttonLike" n:href="Album:visibility $album->id, !$album->public">{if $album->public}zneviditelnit{else}zviditelnit{/if}</a>
+	</li>
+	<li>
+		<a class="buttonLike" n:href="Album:edit $album->slug">upravit album</a>
+	</li>
+{/define}
+
+{define albumPopis}
+<footer class="popis">
+	<span class="no-wrap"><b>Počet fotografií:</b> {$album->findPhotos()->count()}</span>
+	<span class="no-wrap" title="{$album->date|date:'%d. %B %Y'}">
+		<b>Datum:</b> <time datetime="{$album->date|date:'Y-m-d'}">{$album->date|timeAgoInWords}</time>
+	</span>
+	<span class="no-wrap" title="{$album->createdAt|date:'%d. %B %Y %H:%M'}">
+		<b>Přidáno:</b> <time datetime="{$album->createdAt|datetimeC}">{$album->createdAt|timeAgoInWords}</time>
+	</span>
+	<span class="no-wrap" title="{$album->modifiedAt|date:'%d. %B %Y %H:%M'}" n:if="$album->createdAt != $album->modifiedAt">
+		<b>Upraveno:</b> <time datetime="{$album->modifiedAt|datetimeC}">{$album->modifiedAt|timeAgoInWords}</time>
+	</span>
+
+  	<span class="no-wrap"><b>{if $album->public}Viditelné veřejnosti{else}Neviditelné pro veřejnost{/if}</b></span>
+	{if $album->createdBy}
+	<span class="no-wrap float_right member">{$album->createdBy->fullName}</span>
+	{/if}
+</footer>
+{/define}
+
+{define image}
+<img loading="lazy" src="{$baseUrl}/albums/{$album->id}/small/{$image->thumbname}" width="150" height="100" alt="{$image->filename}" n:class="isset($class) ? $class">
+{/define}
+
+{define photoList}
+<article>
+<a n:href="//Album:view $album->slug" target="_blank" title="{$album->summary|truncate:70}" class="round">
+	<h3>{$album->title}</h3>
+
+	<ul n:inner-foreach="$album->findPhotos()->limitBy(10) as $image" class="photoList">
+		<li>{include image}</li>
+	</ul>
+</a>
+
+{include albumPopis album => $album}
+</article>
+{/define}
