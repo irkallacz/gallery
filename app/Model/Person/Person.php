@@ -12,8 +12,10 @@ use Tracy\Debugger;
  * @property int						$id {primary}
  * @property string 					$name
  * @property string 					$surname
+ * @property string 					$mail
  * @property-read string				$fullName {virtual}
  * @property int|null 					$role {enum self::ROLE_*} {default self::ROLE_MEMBER}
+ * @property-read string|null 			$rights
  * @property DateTimeImmutable			$createdAt
  * @property DateTimeImmutable			$modifiedAt
  */

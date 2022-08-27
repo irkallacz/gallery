@@ -6,7 +6,7 @@ use Nextras\Orm\Mapper\Mapper;
 
 final class AlbumsMapper extends Mapper
 {
-	public function getMaxPhotosOrder(int $album_id): int
+	public function getMaxPhotosOrder(int $album_id): ?int
 	{
 		return $this->connection->query('SELECT MAX(`order`) FROM `album_photos` WHERE `album_id` = %i', $album_id)->fetchField();
 	}

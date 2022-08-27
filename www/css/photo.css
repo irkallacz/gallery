@@ -89,7 +89,7 @@ label acronym {cursor: help;}
 .menu li {display: inline;}
 
 .row { display: flex; flex-flow: row wrap-reverse; }
-.row nav { flex-grow: 1; text-align: right}
+.row nav, .row .flex-right { flex-grow: 1; text-align: right}
 
 dl dt {font-weight: bold;}
 

@@ -6,7 +6,7 @@ use Nette\Http\FileUpload;
 use Nette\Utils\Strings;
 use Tracy\Debugger;
 
-final class PhotoService
+final class ImageService
 {
 	const PHOTO_TYPE_ORIGINAL = 'original';
 	const PHOTO_TYPE_LARGE = 'large';
@@ -15,7 +15,6 @@ final class PhotoService
 
 	private string $wwwDir;
 	private string $albumsDir;
-
 	private array $photoDimensions;
 
 	/**
@@ -57,6 +56,13 @@ final class PhotoService
 		}
 
 		return $dimensions;
+	}
+
+	public function createDirectories(int $albumId)
+	{
+		foreach ([self::PHOTO_TYPE_ORIGINAL, self::PHOTO_TYPE_LARGE, self::PHOTO_TYPE_MEDIUM, self::PHOTO_TYPE_SMALL] as $type) {
+			mkdir($this->getPhotoPath($albumId, $type), 0777, true);
+		}
 	}
 
 	/**

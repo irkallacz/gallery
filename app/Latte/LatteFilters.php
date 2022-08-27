@@ -2,7 +2,7 @@
 
 namespace App\Latte;
 
-class LatteFilters
+final class LatteFilters
 {
 	public function load(string $filter): ?callable
 	{

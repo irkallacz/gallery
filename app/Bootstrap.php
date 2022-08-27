@@ -20,9 +20,9 @@ class Bootstrap
 		$configurator->setTimeZone('Europe/Prague');
 		$configurator->setTempDirectory($appDir . '/temp');
 
-		$configurator->createRobotLoader()
-			->addDirectory(__DIR__)
-			->register();
+		//$configurator->createRobotLoader()
+		//	->addDirectory(__DIR__)
+		//	->register();
 
 		$configurator->addParameters(['wwwDir' => dirname(__DIR__) . '/www']);
 

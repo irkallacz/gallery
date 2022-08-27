@@ -28,13 +28,19 @@
 
 		</div>
 
-		<p>{label createdBy /} {input createdBy} <span class="no-wrap">{label date /} {input date}</span></p>
-
 		<p>{input summary class => album-text}</p>
 
 		<p>{input description class => album-text}</p>
 
-		<p class="right">{input selectAll}</p>
+		<div class="row">
+			<div>
+				{label createdBy /} {input createdBy} <span class="no-wrap">{label date /} {input date}</span>
+			</div>
+
+			<div class="flex-right">
+				{input selectAll}
+			</div>
+		</div>
 
 		<ul class="error" n:if="$form->hasErrors()">
 		  <li n:foreach="$form->errors as $error">{$error}</li>

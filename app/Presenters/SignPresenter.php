@@ -3,47 +3,75 @@
 
 namespace App\Presenters;
 
+use App\Authenticator\EmailAuthenticator;
+use App\OAuth\OAuthService;
+use Nette\Application\Attributes\Persistent;
+use Nette\DI\Attributes\Inject;
+use Tracy\Debugger;
 
 final class SignPresenter extends BasePresenter
 {
+	#[Inject]
+	public EmailAuthenticator $authenticator;
+
+	#[Inject]
+	public OAuthService $oauthService;
+
+	#[Persistent]
+	public string $backlink = '';
 
 	public function actionIn()
 	{
-		$url = 'https://account.vzs-jablonec.lh/oauth/auth';
+		if ($this->user->identity) {
+			if ($this->user->identity->token_expiration > time()) {
 
-		$url = $url . http_build_query([
-			'response_type' => 'code',
-			'access_type' => 'online',
-			'client_id' => '',
-			'redirect_uri' => $this->link('//Sign:oAuth'),
-			'state' => '',
-			'scope' => '',
-		]);
+				$this->authenticate($this->user->identity->token);
 
+				if ($this->backlink) {
+					$this->restoreRequest($this->backlink);
+				} else {
+					$this->redirect('Homepage:default');
+				}
+			}
+		}
+
+		$url = $this->oauthService->getAuthorizeCodeUrl($this->backlink);
 		$this->redirectUrl($url);
 	}
 
-	public function actionOAuth(string $code): void
+	public function actionOAuth(string $code, string $state = null): void
 	{
-		//POST https://login.szn.cz/api/v1/oauth/token
-		//Accept: application/json
-		//{
-				//"grant_type": "authorization_code",
-				//"code": "..."
-				//"redirect_uri": "...",
-				//"client_secret": "...",
-				//"client_id": "..."
-		//}
-		//
-		//Odpověď obsahuje standardní data dle RFC a navíc ještě:
-		//
-				//oauth_user_id obsahující unikátní jedinečný identifikátor uživatele; případná další data o uživateli je nutné získat následujícím voláním (které je již autorizováno tokenem)
-				//account_name obsahující e-mail uživatele
-				//scopes obsahující pole scopes, které uživatel odsouhlasil
-		//
-		//Data o uživateli
-		//GET https://login.szn.cz/api/v1/user
-		//Authorization: bearer ...token...
-		//Accept: application/json
+		$response = $this->oauthService->sendAccessTokenRequest($code);
+
+		$this->authenticate($response->access_token);
+
+		$this->user->identity->token = $response->access_token;
+		$this->user->identity->token_expiration = $response->expires_in;
+
+		if ($state) {
+			$this->restoreRequest($state);
+		} else {
+			$this->redirect('Homepage:default');
+		}
+	}
+
+	private function authenticate(string $accessToken)
+	{
+		$response = $this->oauthService->sendUserRequest($accessToken);
+		//$this->user->setExpiration('+6 hours');
+		$this->authenticator->authenticate($response->email);
+
+		//TODO add login to database
+
+		$this->user->identity->mail = $response->email;
+	}
+
+	public function actionOut()
+	{
+		if ($this->user->isLoggedIn()) {
+			$this->user->logout();
+		}
+
+		$this->redirect('Homepage:albums');
 	}
 }

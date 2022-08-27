@@ -95,17 +95,7 @@ final class AlbumPhotoFormFactory extends AlbumFormFactory
 
 	public function save(Form $form, ArrayHash $album): void
 	{
-		if ($this->album->title != $album->title) $this->album->title = $album->title;
-		if ($this->album->slug != $album->slug) $this->album->slug = $album->slug;
-		if ($this->album->createdBy->id != $album->createdBy) $this->album->createdBy = $album->createdBy;
-		if ($this->album->date != $album->date) $this->album->date = $album->date;
-		if ($this->album->summary != $album->summary) $this->album->summary = $album->summary;
-		if ($this->album->description != $album->description) $this->album->description = $album->description;
-
-		if ($this->album->isModified()) {
-			$this->album->modifiedAt = new \DateTimeImmutable();
-			$this->albumsRepository->persistAndFlush($this->album);
-		}
+		$this->album->update($album);
 
 		$photos = $this->album->photos->toCollection()->fetchPairs('id');
 

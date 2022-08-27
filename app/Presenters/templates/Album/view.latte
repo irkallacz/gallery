@@ -1,9 +1,9 @@
 {templateType App\Template\AlbumPhotosTemplate}
 
 {block head}
-	<link rel="stylesheet" href="{$baseUrl}/assets/app.photo.bundle.css">
+	<link rel="stylesheet" href="{$baseUrl}/assets/app.bundle.css">
 	<style n:syntax="off">
-        .photoList { display: flex; flex-flow: row wrap; align-content: flex-start }
+        .photoList { display: flex; flex-flow: row wrap; align-content: flex-start; }
         .photoList li { margin: 3px; position: relative;}
 	</style>
 {/block}
@@ -16,7 +16,7 @@
 <header class="row">
 	<h2 n:block="title">{$album->title}</h2>
 
-	<nav>
+	<nav n:if="$user->isLoggedIn()">
 		<ul class="menu">
 			{include albumMenu album => $album}
 		</ul>
@@ -24,6 +24,7 @@
 </header>
 
 <div n:if="$album->summary">{$album->summary|texy}</div>
+<div n:if="$album->description && $user->isLoggedIn()">{$album->description|texy}</div>
 
 <ul class="photoList" n:inner-foreach="$photos as $photo">
 	<li n:class="(($album->public) and (!$photo->public)) ? 'hidden'">
@@ -44,7 +45,7 @@
 	<a title="Sdílet na Facebook" href="https://www.facebook.com/sharer.php?u={link //this}"><img class="icon" src="{$baseUrl}/img/facebook.svg" alt="Facebook"></a>
 </p>
 
-<p>
+<p n:if="$user->isLoggedIn()">
     <a title="Sdílet" n:href="Album:view $album->slug, $album->hash"><img class="icon" src="{$baseUrl}/img/link.svg"> Odkaz pro sdílení</a>
 </p>
 

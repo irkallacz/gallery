@@ -7,6 +7,7 @@ use App\Model\Album\Album;
 use App\Model\Person\PersonsRepository;
 use App\Model\Album\AlbumsRepository;
 use App\Model\AlbumPhoto\AlbumPhotosRepository;
+use App\Photo\ImageService;
 use Nette\Application\UI\Form;
 use Nette\DI\Attributes\Inject;
 use Nette\Utils\Strings;
@@ -22,6 +23,9 @@ final class HomepagePresenter extends BasePresenter
 	public AlbumPhotosRepository $photosRepository;
 
 	#[Inject]
+	public ImageService $photoService;
+
+	#[Inject]
 	public PersonsRepository $personsRepository;
 
 	const ALBUM_COUNT = 30;
@@ -30,10 +34,10 @@ final class HomepagePresenter extends BasePresenter
 
 	public function renderDefault(): void
 	{
-		$this->template->photos = $this->photosRepository->findRandomPhotos()
+		$photos = $this->photosRepository->findRandomPhotos()
 			->limitBy(10);
 
-		$this->template->albums = $this->albumsRepository->findByVisibility()
+		$this->template->albums = $this->albumsRepository->findByVisibility(!$this->user->isLoggedIn())
 			->orderBy('createdAt', ICollection::DESC)
 			->limitBy(5);
 
@@ -49,12 +53,16 @@ final class HomepagePresenter extends BasePresenter
 			$this->template->dateLast = $dateLast;
 			$this->template->albumCount = $this->albumsRepository->findBy(['createdBy' => $this->user->id])->count();
 			$this->template->photoCount = $this->photosRepository->findBy(['createdBy' => $this->user->id])->count();
+		} else {
+			$photos = $photos->findBy(['public' => true]);
 		}
+
+		$this->template->photos = $photos;
 	}
 
 	public function renderAlbums(): void
 	{
-		$albums = $this->albumsRepository->findByVisibility()
+		$albums = $this->albumsRepository->findByVisibility(!$this->user->isLoggedIn())
 			->orderBy('date', ICollection::DESC)
 			->limitBy(self::ALBUM_COUNT + 1, $this->offset)
 			->fetchAll();
@@ -87,9 +95,11 @@ final class HomepagePresenter extends BasePresenter
 		$form->addSubmit('save', 'uložit')
 			->onClick[] = function (Form $form, Album $album) {
 				$album->slug = Strings::webalize($album->title);
-				$album->createdBy = $this->personsRepository->getByIdChecked($this->user);
+				$album->createdBy = $this->personsRepository->getByIdChecked($this->user->id);
 
 				$this->albumsRepository->persistAndFlush($album);
+
+				$this->photoService->createDirectories($album->id);
 
 				$this->flashMessage('Album bylo vytvořeno');
 				$this->redirect('Album:upload', $album->slug);

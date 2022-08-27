@@ -3,11 +3,9 @@ const path = require('path');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
-	entry: {
-		photo: './www/js/app.photo.js',
-	},
+	entry: './www/js/app.photo.js',
 	output: {
-		filename: 'app.[name].bundle.js',
+		filename: 'app.bundle.js',
 		path: path.join(__dirname, 'www', 'assets')
 	},
 	mode: (process.env.NODE_ENV === 'production') ? 'production' : 'development',
@@ -16,7 +14,7 @@ module.exports = {
 	//}
 	plugins: [
 		new MiniCssExtractPlugin({
-			filename: "app.[name].bundle.css",
+			filename: "app.bundle.css",
 		}),
 	],
 	module: {

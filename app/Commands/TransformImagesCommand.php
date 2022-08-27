@@ -4,7 +4,7 @@ namespace App\Commands;
 
 use App\Model\Album\AlbumsRepository;
 use App\Model\AlbumPhoto\AlbumPhotosRepository;
-use App\Photo\PhotoService;
+use App\Photo\ImageService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -13,7 +13,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class TransformImagesCommand extends Command
 {
 
-	private PhotoService $photoService;
+	private ImageService $photoService;
 
 	private AlbumsRepository $albumsRepository;
 
@@ -21,10 +21,10 @@ final class TransformImagesCommand extends Command
 
 	/**
 	 * TransformImagesCommand constructor.
-	 * @param PhotoService $photoService
+	 * @param ImageService $photoService
 	 * @param AlbumsRepository $albumsRepository
 	 */
-	public function __construct(PhotoService $photoService, AlbumsRepository $albumsRepository)
+	public function __construct(ImageService $photoService, AlbumsRepository $albumsRepository)
 	{
 		parent::__construct();
 
@@ -51,7 +51,7 @@ final class TransformImagesCommand extends Command
 		foreach ($albums as $album) {
 			$output->writeln($album->slug);
 
-			foreach ([PhotoService::PHOTO_TYPE_LARGE, PhotoService::PHOTO_TYPE_MEDIUM, PhotoService::PHOTO_TYPE_SMALL, PhotoService::PHOTO_TYPE_ORIGINAL] as $type) {
+			foreach ([ImageService::PHOTO_TYPE_LARGE, ImageService::PHOTO_TYPE_MEDIUM, ImageService::PHOTO_TYPE_SMALL, ImageService::PHOTO_TYPE_ORIGINAL] as $type) {
 				$path = $this->photoService->getPhotoPath($album->id, $type);
 
 				if (!file_exists($path)) {
@@ -63,7 +63,7 @@ final class TransformImagesCommand extends Command
 
 			foreach ($album->photos as $photo) {
 				$oldPath = $this->photoService->getPhotoPath($album->id, null, $photo->filename);
-				$newPath = $this->photoService->getPhotoPath($album->id, PhotoService::PHOTO_TYPE_ORIGINAL, $photo->filename);
+				$newPath = $this->photoService->getPhotoPath($album->id, ImageService::PHOTO_TYPE_ORIGINAL, $photo->filename);
 
 				if (file_exists($oldPath)) {
 					$backupPath = $oldPath . '_';

@@ -4,6 +4,7 @@ namespace App\Model\Album;
 
 use App\Model\Person\Person;
 use App\Model\AlbumPhoto\AlbumPhoto;
+use Nette\Utils\ArrayHash;
 use Nextras\Orm\Collection\ICollection;
 use Nextras\Orm\Entity\Entity;
 use DateTimeImmutable;
@@ -26,11 +27,11 @@ use Nextras\Orm\Relationships\OneHasMany;
  */
 final class Album extends Entity
 {
-	public function findPhotos(bool $public = true): ICollection
+	public function findPhotos(bool $publicOnly = true): ICollection
 	{
 		$photos = $this->photos->toCollection();
-		if (!$public) {
-			$photos->findBy(['public' => true]);
+		if ($publicOnly) {
+			$photos = $photos->findBy(['public' => true]);
 		}
 
 		return $photos;
@@ -41,7 +42,7 @@ final class Album extends Entity
 		$this->getRepository()->resetPhotosOrder($this->id, $greaterThen);
 	}
 
-	public function getLastPhotoByCreatedAt(\DateTimeInterface $greaterThen): AlbumPhoto
+	public function getLastPhotoByCreatedAt(\DateTimeInterface $greaterThen): ?AlbumPhoto
 	{
 		return $this->photos->toCollection()
 			->findBy(['takenAt>' => $greaterThen])
@@ -50,7 +51,7 @@ final class Album extends Entity
 			->fetch();
 	}
 
-	public function getMaxPhotosOrder(): int
+	public function getMaxPhotosOrder(): ?int
 	{
 		return $this->getRepository()->getMaxPhotosOrder($this->id);
 	}
@@ -66,7 +67,22 @@ final class Album extends Entity
 		parent::onAfterInsert();
 		$this->slug = $this->id . '-' . $this->slug;
 
-		//$this->getRepository()->persistAndFlush($this);
-		$this->getRepository()->flush();
+		$this->getRepository()->persistAndFlush($this);
+	}
+
+	public function update(ArrayHash $album) {
+		foreach (['title', 'slug', 'date', 'summary', 'description'] as $property) {
+			$value = $album->{$property};
+			if ($this->getValue($property) != $value) {
+				$this->setValue($property, $value);
+			}
+		}
+
+		if ($this->createdBy->id != $album->createdBy) $this->createdBy = $album->createdBy;
+
+		if ($this->isModified()) {
+			$this->modifiedAt = new \DateTimeImmutable();
+			$this->getRepository()->persistAndFlush($this);
+		}
 	}
 }

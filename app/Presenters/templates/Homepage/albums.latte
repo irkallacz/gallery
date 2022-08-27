@@ -9,7 +9,7 @@
 	<header class="row">
 		<h2 n:block="title">Alba</h2>
 
-		<nav>
+		<nav n:if="$user->isLoggedIn()">
 			<ul class="menu">
 				<li><button id="show-album-form-button" class="buttonLike">přidat album</button></li>
 			</ul>

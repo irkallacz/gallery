@@ -1,8 +1,17 @@
 parameters:
+	photoDir: albums
 	photoDimensions:
 		small: [150, 100]
 		medium: [1024, 0]
 		large: [1920, 0]
+	oauth:
+		clientId: '62fa87e3d1a76-gallery'
+		clientSecret: 'uO5iZ-irO5s-vsX11YwZuEsyHm9sLvx0nP3'
+		redirectUrl: 'https://gallery.vzs-jablonec.lh/sign/o-auth'
+		authorizeUrl: 'https://account.vzs-jablonec.lh/oauth/auth'
+		tokenUrl: 'https://account.vzs-jablonec.lh/oauth/token'
+		resourceUrl: 'https://account.vzs-jablonec.lh/oauth/user'
+		#resource_method: 'GET'
 
 application:
 	errorPresenter: Error
@@ -11,6 +20,17 @@ application:
 
 session:
 	expiration: 14 days
+
+security:
+	authentication:
+		# po jak dlouhé době nečinnosti bude uživatel odhlášen
+		expiration: 6 hours
+
+routing:
+	routes:
+		'album': Homepage:albums
+		'album/<slug \d+-[\w-]+>/<action view|edit|upload>': Album:view
+		'<presenter>/<action>[/<id>]': Homepage:default
 
 di:
 	export:
@@ -32,6 +52,3 @@ dbal:
 
 nextras.orm:
 	model: App\Model\Orm
-
-services:
-	- App\Forms\AlbumPhotoFormFactory

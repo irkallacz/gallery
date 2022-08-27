@@ -1,11 +1,4 @@
-{**
- * @package    MyApplication
- *
- * @param string   $robots   tell robots how to index the content of a page (optional)
- * @param string   $baseUrl web base path
- * @param array    $flashes  flash messages
- * @param Nette\Web\User $user  current user
- *}
+{templateType App\Template\LayoutTemplate}
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -29,7 +22,7 @@
 	<nav>
 		<ul id="mainMenu" n:inner-foreach="$mainMenu as $item">
 			<li n:if="(!$item->role)or($user->isInRole($item->role))" n:class="$item->current ? current">
-				<a n:href="$item->link">{$item->title}</a>
+				<a {if str_starts_with($item->link, 'http')}href="{$item->link}"{else}href="{link $item->link}"{/if}>{$item->title}</a>
 			</li>
 		</ul>
 	</nav>
@@ -49,43 +42,45 @@
 
 	{include content}
 </section>
-	<script type="application/javascript" src="{$baseUrl}/assets/app.photo.bundle.js"></script>
+	<script type="application/javascript" src="{$baseUrl}/assets/app.bundle.js"></script>
 	{block scripts}{/block}
 </main>
 </body>
 </html>
 
 {define albumMenu}
-	<li>
+	<li n:if="$user->isInRole('user')">
 		<a class="buttonLike" n:href="Album:upload $album->slug">přidat fotky</a></li>
-	<li>
+	<li n:if="$album->createdBy->id == $user->id">
 		<a class="buttonLike confirm" n:href="Album:delete $album->id" data-confirm="Opravdu chcete vymazat toto album?">smazat album</a>
 	</li>
-	<li>
+	<li n:if="$user->isInRole('gallery')">
 		<a class="buttonLike" n:href="Album:visibility $album->id, !$album->public">{if $album->public}zneviditelnit{else}zviditelnit{/if}</a>
 	</li>
-	<li>
+	<li n:if="($album->createdBy->id == $user->id) || ($user->isInRole('gallery'))">
 		<a class="buttonLike" n:href="Album:edit $album->slug">upravit album</a>
 	</li>
 {/define}
 
 {define albumPopis}
-<footer class="popis">
-	<span class="no-wrap"><b>Počet fotografií:</b> {$album->findPhotos()->count()}</span>
-	<span class="no-wrap" title="{$album->date|date:'%d. %B %Y'}">
-		<b>Datum:</b> <time datetime="{$album->date|date:'Y-m-d'}">{$album->date|timeAgoInWords}</time>
-	</span>
-	<span class="no-wrap" title="{$album->createdAt|date:'%d. %B %Y %H:%M'}">
-		<b>Přidáno:</b> <time datetime="{$album->createdAt|datetimeC}">{$album->createdAt|timeAgoInWords}</time>
-	</span>
-	<span class="no-wrap" title="{$album->modifiedAt|date:'%d. %B %Y %H:%M'}" n:if="$album->createdAt != $album->modifiedAt">
-		<b>Upraveno:</b> <time datetime="{$album->modifiedAt|datetimeC}">{$album->modifiedAt|timeAgoInWords}</time>
-	</span>
+<footer class="popis row">
+	<div>
+		<span class="no-wrap"><b>Počet fotografií:</b> {$album->findPhotos($publicOnly)->count()}</span>
+		<span class="no-wrap" title="{$album->date|date:'%d. %B %Y'}">
+			<b>Datum:</b> <time datetime="{$album->date|date:'Y-m-d'}">{$album->date|timeAgoInWords}</time>
+		</span>
+		<span class="no-wrap" title="{$album->createdAt|date:'%d. %B %Y %H:%M'}">
+			<b>Přidáno:</b> <time datetime="{$album->createdAt|datetimeC}">{$album->createdAt|timeAgoInWords}</time>
+		</span>
+		<span class="no-wrap" title="{$album->modifiedAt|date:'%d. %B %Y %H:%M'}" n:if="$album->createdAt != $album->modifiedAt">
+			<b>Upraveno:</b> <time datetime="{$album->modifiedAt|datetimeC}">{$album->modifiedAt|timeAgoInWords}</time>
+		</span>
 
-  	<span class="no-wrap"><b>{if $album->public}Viditelné veřejnosti{else}Neviditelné pro veřejnost{/if}</b></span>
-	{if $album->createdBy}
-	<span class="no-wrap float_right member">{$album->createdBy->fullName}</span>
-	{/if}
+		<span class="no-wrap"><b>{if $album->public}Viditelné veřejnosti{else}Neviditelné pro veřejnost{/if}</b></span>
+	</div>
+	<div n:if="$album->createdBy" class="right flex-right">
+		<span class="no-wrap member">{$album->createdBy->fullName}</span>
+	</div>
 </footer>
 {/define}
 
@@ -96,13 +91,15 @@
 {define photoList}
 <article>
 <a n:href="//Album:view $album->slug" target="_blank" title="{$album->summary|truncate:70}" class="round">
-	<h3>{$album->title}</h3>
+	<header class="row">
+		<h3>{$album->title}</h3>
+	</header>
 
-	<ul n:inner-foreach="$album->findPhotos()->limitBy(10) as $image" class="photoList">
+	<ul n:inner-foreach="$album->findPhotos(!$user->isLoggedIn())->limitBy(10) as $image" class="photoList">
 		<li>{include image}</li>
 	</ul>
 </a>
 
-{include albumPopis album => $album}
+{include albumPopis album => $album, publicOnly => !$user->isLoggedIn()}
 </article>
 {/define}

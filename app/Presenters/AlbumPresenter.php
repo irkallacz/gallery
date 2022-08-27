@@ -5,17 +5,20 @@ namespace App\Presenters;
 
 use App\Forms\AlbumPhotoFormFactory;
 use App\Model\Person\PersonsRepository;
-use App\Photo\PhotoService;
+use App\Photo\ImageService;
 use App\Model\Album\Album;
 use App\Model\Album\AlbumsRepository;
 use App\Model\AlbumPhoto\AlbumPhoto;
 use App\Model\AlbumPhoto\AlbumPhotosRepository;
 use Nette\Application\BadRequestException;
+use Nette\Application\ForbiddenRequestException;
 use Nette\DI\Attributes\Inject;
 use Nette\Forms\Form;
 use Nette\Http\FileUpload;
 use Nette\Http\IResponse;
 
+use Nette\Security\AuthenticationException;
+use Nextras\Orm\Entity\AbstractEntity;
 use Nextras\Orm\Exception\NoResultException;
 use Tracy\Debugger;
 
@@ -28,7 +31,7 @@ final class AlbumPresenter extends BasePresenter
 	public AlbumPhotosRepository $photosRepository;
 
 	#[Inject]
-	public PhotoService $photoService;
+	public ImageService $photoService;
 
 	#[Inject]
 	public PersonsRepository $personsRepository;
@@ -42,22 +45,46 @@ final class AlbumPresenter extends BasePresenter
 	{
 		$this->getAlbumBySlug($slug);
 
-		$this->template->photos = $this->album->findPhotos();
+		$publicOnly = false;
+		if (!$this->user->isLoggedIn()) {
+			$publicOnly = true;
+			if ($hash == $this->album->hash) {
+				$publicOnly = false;
+			} else {
+				if (!$this->album->public) {
+					$backlink = $this->storeRequest();
+					$this->redirect('Sign:in', ['backlink' => $backlink]);
+				}
+			}
+		}
 
-		$this->template->mediumPath = $this->photoService->getRelativePhotoPath($this->album->id, PhotoService::PHOTO_TYPE_MEDIUM);
-		$this->template->largePath = $this->photoService->getRelativePhotoPath($this->album->id, PhotoService::PHOTO_TYPE_LARGE);
+		$this->template->publicOnly = $publicOnly;
+		$this->template->photos = $this->album->findPhotos($publicOnly);
+	}
+
+	public function renderView(string $slug, string $hash = null)
+	{
+		$this->template->mediumPath = $this->photoService->getRelativePhotoPath($this->album->id, ImageService::PHOTO_TYPE_MEDIUM);
+		$this->template->largePath = $this->photoService->getRelativePhotoPath($this->album->id, ImageService::PHOTO_TYPE_LARGE);
 		$this->template->originalPath = $this->photoService->getRelativePhotoPath($this->album->id);
 	}
 
 	public function actionUpload(string $slug): void
 	{
-		$this->getAlbumBySlug($slug);
+		$this->getAlbumBySlugChecked($slug);
 	}
 
 	public function actionEdit(string $slug): void
 	{
-		$this->getAlbumBySlug($slug);
+		$this->getAlbumBySlugChecked($slug);
 
+		if (($this->album->createdBy->id != $this->user->id) && $this->user->isInRole('gallery')) {
+			throw new ForbiddenRequestException('You dont have rights for this action');
+		}
+	}
+
+	public function renderEdit(string $slug): void
+	{
 		$this->template->originalPath = $this->photoService->getRelativePhotoPath($this->album->id);
 	}
 
@@ -106,55 +133,53 @@ final class AlbumPresenter extends BasePresenter
 
 	public function handlePhotoUpload(): void
 	{
-		if (!($file = $_FILES['file'] ?? null)) {
-			throw new \ErrorException('File do not exists');
-		}
+		$httpRequest = $this->getHttpRequest();
 
-		$fileUpload = new FileUpload($file);
-		$httpResponse = $this->getHttpResponse();
-
-		if ($fileUpload->hasFile()) {
-			if (!$fileUpload->isImage()) {
-				$httpResponse->setCode(IResponse::S422_UNPROCESSABLE_ENTITY);
-				$this->sendJson(['error' => 'Vybraný soubor není obrázek']);
-			} elseif ($fileUpload->isOk()) {
-				$hash = md5_file($fileUpload->getTemporaryFile());
-
-				if ($photo = $this->photosRepository->getByHash($this->album->id, $hash)) {
+		if ($fileUpload = $httpRequest->getFile('file')) {
+			if ($fileUpload->hasFile()) {
+				$httpResponse = $this->getHttpResponse();
+				if (!$fileUpload->isImage()) {
 					$httpResponse->setCode(IResponse::S422_UNPROCESSABLE_ENTITY);
-					$this->sendJson(['error' => 'Fotografie již v albu existuje']);
-				} else {
-					list($fileName, $thumbName) = $this->photoService->uploadPhoto($fileUpload, $this->album->id);
+					$this->sendJson(['error' => 'Vybraný soubor není obrázek']);
+				} elseif ($fileUpload->isOk()) {
+					$hash = md5_file($fileUpload->getTemporaryFile());
 
-					//Pokud existuje datum vytvoření fotografie a jsou zde fotografie staršího data, změni jejich pořadí,
-					// jinak je to poslední fotka a patří na konec
-					$updateOrder = false;
-					if (!($takenAt = $this->photoService->getPhotoDate($this->album->id, $fileName))) {
-						$takenAt = new \DateTimeImmutable();
-					} elseif ($last = $this->album->getLastPhotoByCreatedAt($takenAt)) {
-						$updateOrder = true;
-						$order = $last->order;
+					if ($photo = $this->photosRepository->getByHash($this->album->id, $hash)) {
+						$httpResponse->setCode(IResponse::S422_UNPROCESSABLE_ENTITY);
+						$this->sendJson(['error' => 'Fotografie již v albu existuje']);
+					} else {
+						list($fileName, $thumbName) = $this->photoService->uploadPhoto($fileUpload, $this->album->id);
+
+						//Pokud existuje datum vytvoření fotografie a jsou zde fotografie staršího data, změni jejich pořadí,
+						// jinak je to poslední fotka a patří na konec
+						$updateOrder = false;
+						if (!($takenAt = $this->photoService->getPhotoDate($this->album->id, $fileName))) {
+							$takenAt = new \DateTimeImmutable();
+						} elseif ($last = $this->album->getLastPhotoByCreatedAt($takenAt)) {
+							$updateOrder = true;
+							$order = $last->order;
+						}
+
+						if (!$updateOrder) {
+							$order = $this->album->getMaxPhotosOrder() + 1;
+						}
+
+						$photo = new AlbumPhoto();
+						$photo->filename = $fileName;
+						$photo->thumbname = $thumbName;
+						$photo->hash = $hash;
+						$photo->createdBy = $this->personsRepository->getByIdChecked($this->user->id);
+						$photo->album = $this->album;
+						$photo->takenAt = $takenAt;
+						$photo->order = $order;
+						$this->photosRepository->persistAndFlush($photo);
+
+						if ($updateOrder) {
+							$this->album->updatePhotosOrder($takenAt);
+						}
+
+						$this->sendJson(['success' => 'Nahrán soubor: ' . $fileName]);
 					}
-
-					if (!$updateOrder) {
-						$order = $this->album->getMaxPhotosOrder() + 1;
-					}
-
-					$photo = new AlbumPhoto();
-					$photo->filename = $fileName;
-					$photo->thumbname = $thumbName;
-					$photo->hash = $hash;
-					$photo->createdBy = $this->personsRepository->getByIdChecked($this->user);
-					$photo->album = $this->album;
-					$photo->takenAt = $takenAt;
-					$photo->order = $order;
-					$this->photosRepository->persistAndFlush($photo);
-
-					if ($updateOrder) {
-						$this->album->updatePhotosOrder($takenAt);
-					}
-
-					$this->sendJson(['success' => 'Nahrán soubor: ' . $fileName]);
 				}
 			}
 		}
@@ -169,7 +194,21 @@ final class AlbumPresenter extends BasePresenter
 		}
 
 		$this->template->album = $this->album;
-		$this->template->thumbPath = $this->photoService->getRelativePhotoPath($this->album->id, PhotoService::PHOTO_TYPE_SMALL);
+		$this->template->thumbPath = $this->photoService->getRelativePhotoPath($this->album->id, ImageService::PHOTO_TYPE_SMALL);
+	}
+
+	private function getAlbumBySlugChecked(string $slug): void
+	{
+		$this->getAlbumBySlug($slug);
+
+		//if ((!$this->album->public)&&(!$this->user->isLoggedIn())) {
+		//	throw new ForbiddenRequestException('You need to be log in');
+		//}
+
+		if ((!$this->album->public) && (!$this->user->isLoggedIn())) {
+			$backlink = $this->storeRequest();
+			$this->redirect('Sign:in', ['backlink' => $backlink]);
+		}
 	}
 
 	private function getAlbumById(int $id): Album
@@ -178,6 +217,10 @@ final class AlbumPresenter extends BasePresenter
 			$album = $this->albumsRepository->getByIdChecked($id);
 		} catch (NoResultException $exception) {
 			throw new BadRequestException('Album do not exists');
+		}
+
+		if ((!$album->public) && (!$this->user->isLoggedIn())) {
+			throw new ForbiddenRequestException('You need to be log in');
 		}
 
 		return $album;
