@@ -5,7 +5,7 @@ namespace App\Presenters;
 
 use App\Forms\AlbumPhotoFormFactory;
 use App\Model\Person\PersonsRepository;
-use App\Photo\ImageService;
+use App\Image\ImageService;
 use App\Model\Album\Album;
 use App\Model\Album\AlbumsRepository;
 use App\Model\AlbumPhoto\AlbumPhoto;
@@ -31,7 +31,7 @@ final class AlbumPresenter extends BasePresenter
 	public AlbumPhotosRepository $photosRepository;
 
 	#[Inject]
-	public ImageService $photoService;
+	public ImageService $imageService;
 
 	#[Inject]
 	public PersonsRepository $personsRepository;
@@ -43,19 +43,24 @@ final class AlbumPresenter extends BasePresenter
 
 	public function actionView(string $slug, string $hash = null): void
 	{
-		$this->getAlbumBySlug($slug);
+		$publicOnly = !$this->user->isLoggedIn();
 
-		$publicOnly = false;
-		if (!$this->user->isLoggedIn()) {
+		try {
+			$this->getAlbumBySlug($slug, 'view', false);
+		} catch (ForbiddenRequestException $exception) {
 			$publicOnly = true;
-			if ($hash == $this->album->hash) {
-				$publicOnly = false;
-			} else {
+			if ($hash !== $this->album->hash) {
 				if (!$this->album->public) {
 					$backlink = $this->storeRequest();
 					$this->redirect('Sign:in', ['backlink' => $backlink]);
+				} else {
+					throw $exception;
 				}
 			}
+		}
+
+		if ($hash == $this->album->hash) {
+			$publicOnly = false;
 		}
 
 		$this->template->publicOnly = $publicOnly;
@@ -64,33 +69,30 @@ final class AlbumPresenter extends BasePresenter
 
 	public function renderView(string $slug, string $hash = null)
 	{
-		$this->template->mediumPath = $this->photoService->getRelativePhotoPath($this->album->id, ImageService::PHOTO_TYPE_MEDIUM);
-		$this->template->largePath = $this->photoService->getRelativePhotoPath($this->album->id, ImageService::PHOTO_TYPE_LARGE);
-		$this->template->originalPath = $this->photoService->getRelativePhotoPath($this->album->id);
+		$this->template->thumbPath = $this->imageService->getRelativeImagePath($this->album->id, ImageService::IMAGE_TYPE_SMALL);
+		$this->template->mediumPath = $this->imageService->getRelativeImagePath($this->album->id, ImageService::IMAGE_TYPE_MEDIUM);
+		$this->template->largePath = $this->imageService->getRelativeImagePath($this->album->id, ImageService::IMAGE_TYPE_LARGE);
+		$this->template->originalPath = $this->imageService->getRelativeImagePath($this->album->id);
 	}
 
 	public function actionUpload(string $slug): void
 	{
-		$this->getAlbumBySlugChecked($slug);
+		$this->getAlbumBySlug($slug, 'upload');
 	}
 
 	public function actionEdit(string $slug): void
 	{
-		$this->getAlbumBySlugChecked($slug);
-
-		if (($this->album->createdBy->id != $this->user->id) && $this->user->isInRole('gallery')) {
-			throw new ForbiddenRequestException('You dont have rights for this action');
-		}
+		$this->getAlbumBySlug($slug, 'edit');
 	}
 
 	public function renderEdit(string $slug): void
 	{
-		$this->template->originalPath = $this->photoService->getRelativePhotoPath($this->album->id);
+		$this->template->originalPath = $this->imageService->getRelativeImagePath($this->album->id);
 	}
 
 	public function actionDelete(int $id): void
 	{
-		$album = $this->getAlbumById($id);
+		$album = $this->getAlbumById($id, 'delete');
 		$this->albumsRepository->removeAndFlush($album);
 
 		$this->flashMessage('Album bylo smazáno');
@@ -99,7 +101,7 @@ final class AlbumPresenter extends BasePresenter
 
 	public function actionVisibility(int $id, bool $public): void
 	{
-		$album = $this->getAlbumById($id);
+		$album = $this->getAlbumById($id, 'visibility');
 		$album->public = $public;
 
 		$this->albumsRepository->persistAndFlush($album);
@@ -148,14 +150,14 @@ final class AlbumPresenter extends BasePresenter
 						$httpResponse->setCode(IResponse::S422_UNPROCESSABLE_ENTITY);
 						$this->sendJson(['error' => 'Fotografie již v albu existuje']);
 					} else {
-						list($fileName, $thumbName) = $this->photoService->uploadPhoto($fileUpload, $this->album->id);
+						list($fileName, $thumbName) = $this->imageService->uploadImage($fileUpload, $this->album->id);
 
 						//Pokud existuje datum vytvoření fotografie a jsou zde fotografie staršího data, změni jejich pořadí,
 						// jinak je to poslední fotka a patří na konec
 						$updateOrder = false;
-						if (!($takenAt = $this->photoService->getPhotoDate($this->album->id, $fileName))) {
+						if (!($takenAt = $this->imageService->getImageDate($this->album->id, $fileName))) {
 							$takenAt = new \DateTimeImmutable();
-						} elseif ($last = $this->album->getLastPhotoByCreatedAt($takenAt)) {
+						} elseif ($last = $this->album->getLastPhotoByTakenAt($takenAt)) {
 							$updateOrder = true;
 							$order = $last->order;
 						}
@@ -185,7 +187,7 @@ final class AlbumPresenter extends BasePresenter
 		}
 	}
 
-	private function getAlbumBySlug(string $slug): void
+	private function getAlbumBySlug(string $slug, string $action, bool $checkLogin = true): void
 	{
 		try {
 			$this->album = $this->albumsRepository->getBySlug($slug);
@@ -194,33 +196,31 @@ final class AlbumPresenter extends BasePresenter
 		}
 
 		$this->template->album = $this->album;
-		$this->template->thumbPath = $this->photoService->getRelativePhotoPath($this->album->id, ImageService::PHOTO_TYPE_SMALL);
-	}
 
-	private function getAlbumBySlugChecked(string $slug): void
-	{
-		$this->getAlbumBySlug($slug);
-
-		//if ((!$this->album->public)&&(!$this->user->isLoggedIn())) {
-		//	throw new ForbiddenRequestException('You need to be log in');
-		//}
-
-		if ((!$this->album->public) && (!$this->user->isLoggedIn())) {
+		if (($checkLogin) && (!$this->album->public) && (!$this->user->isLoggedIn())) {
 			$backlink = $this->storeRequest();
 			$this->redirect('Sign:in', ['backlink' => $backlink]);
 		}
+
+		if (!$this->user->authorizator->isAllowed($this->user->identity ?? 'guest', $this->album, $action)) {
+			throw new ForbiddenRequestException('You dont have rights for this action');
+		}
 	}
 
-	private function getAlbumById(int $id): Album
+	private function getAlbumById(int $id, string $action = 'view'): Album
 	{
+		if (!$this->user->isLoggedIn()) {
+			throw new ForbiddenRequestException('You need to be log in');
+		}
+
 		try {
 			$album = $this->albumsRepository->getByIdChecked($id);
 		} catch (NoResultException $exception) {
 			throw new BadRequestException('Album do not exists');
 		}
 
-		if ((!$album->public) && (!$this->user->isLoggedIn())) {
-			throw new ForbiddenRequestException('You need to be log in');
+		if (!$this->user->authorizator->isAllowed($this->user->identity, $album, $action)) {
+			throw new ForbiddenRequestException('You dont have rights for this action');
 		}
 
 		return $album;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Photo;
+namespace App\Image;
 
 use Nette\Http\FileUpload;
 use Nette\Utils\Strings;
@@ -8,29 +8,29 @@ use Tracy\Debugger;
 
 final class ImageService
 {
-	const PHOTO_TYPE_ORIGINAL = 'original';
-	const PHOTO_TYPE_LARGE = 'large';
-	const PHOTO_TYPE_MEDIUM = 'medium';
-	const PHOTO_TYPE_SMALL = 'small';
+	const IMAGE_TYPE_ORIGINAL = 'original';
+	const IMAGE_TYPE_LARGE = 'large';
+	const IMAGE_TYPE_MEDIUM = 'medium';
+	const IMAGE_TYPE_SMALL = 'small';
 
 	private string $wwwDir;
 	private string $albumsDir;
-	private array $photoDimensions;
+	private array $imageDimensions;
 
 	/**
 	 * PhotoService constructor.
 	 * @param string $wwwDir
 	 * @param string $albumsDir
-	 * @param array $photoDimensions
+	 * @param array $imageDimensions
 	 */
-	public function __construct(string $wwwDir, string $albumsDir, array $photoDimensions)
+	public function __construct(string $wwwDir, string $albumsDir, array $imageDimensions)
 	{
 		$this->wwwDir = $wwwDir;
 		$this->albumsDir = $albumsDir;
-		$this->photoDimensions = $photoDimensions;
+		$this->imageDimensions = $imageDimensions;
 	}
 
-	public function getPhotoPath(int $albumId, string $type = null, string $fileName = null, bool $relative = false): string
+	public function getImagePath(int $albumId, string $type = null, string $fileName = null, bool $relative = false): string
 	{
 		$items = array_filter([$fileName, $type, $albumId, $this->albumsDir]);
 
@@ -41,14 +41,14 @@ final class ImageService
 		return join(DIRECTORY_SEPARATOR, array_reverse($items));
  	}
 
- 	public function getRelativePhotoPath(int $albumId, string $type = self::PHOTO_TYPE_ORIGINAL): string
+ 	public function getRelativeImagePath(int $albumId, string $type = self::IMAGE_TYPE_ORIGINAL): string
 	{
-		return $this->getPhotoPath($albumId, $type, null, true);
+		return $this->getImagePath($albumId, $type, null, true);
 	}
 
- 	private function getPhotoDimensions(string $type, bool $horizontal = false): array
+ 	private function getImageDimensions(string $type, bool $horizontal = false): array
 	{
-		$dimensions = $this->photoDimensions[$type];
+		$dimensions = $this->imageDimensions[$type];
 
 		if ($horizontal) {
 			//krsort($dimensions);
@@ -60,8 +60,8 @@ final class ImageService
 
 	public function createDirectories(int $albumId)
 	{
-		foreach ([self::PHOTO_TYPE_ORIGINAL, self::PHOTO_TYPE_LARGE, self::PHOTO_TYPE_MEDIUM, self::PHOTO_TYPE_SMALL] as $type) {
-			mkdir($this->getPhotoPath($albumId, $type), 0777, true);
+		foreach ([self::IMAGE_TYPE_ORIGINAL, self::IMAGE_TYPE_LARGE, self::IMAGE_TYPE_MEDIUM, self::IMAGE_TYPE_SMALL] as $type) {
+			mkdir($this->getImagePath($albumId, $type), 0777, true);
 		}
 	}
 
@@ -69,25 +69,25 @@ final class ImageService
 	 * @return string[]
 	 * @throws \ImagickException
 	 */
-	public function uploadPhoto(FileUpload $fileUpload, int $albumId): array
+	public function uploadImage(FileUpload $fileUpload, int $albumId): array
 	{
 		$fileName = $fileUpload->getSanitizedName();
 
-		$filePath = $this->getPhotoPath($albumId, self::PHOTO_TYPE_ORIGINAL, $fileName);
+		$filePath = $this->getImagePath($albumId, self::IMAGE_TYPE_ORIGINAL, $fileName);
 		$fileUpload->move($filePath);
 
 		$thumbName = self::getThumbName($fileName);
 
-		$this->transformPhoto($albumId, $filePath, $thumbName);
+		$this->transformImage($albumId, $filePath, $thumbName);
 
 		return [$fileName, $thumbName];
 	}
 
-	public function transformPhoto(int $albumId, string $filePath, string $thumbName): void
+	public function transformImage(int $albumId, string $filePath, string $thumbName): void
 	{
 		$image = new \Imagick($filePath);
 
-		$this->fixPhotoOrientation($image);
+		$this->fixImageOrientation($image);
 		$this->generateThumbnails($albumId, $image, $thumbName);
 	}
 
@@ -105,21 +105,21 @@ final class ImageService
 		$image->setOption('webp:method', '6');
 		$image->setImageCompressionQuality(50);
 
-		foreach ([self::PHOTO_TYPE_LARGE, self::PHOTO_TYPE_MEDIUM] as $type) {
-			$dimensions = $this->getPhotoDimensions($type, $horizontal);
+		foreach ([self::IMAGE_TYPE_LARGE, self::IMAGE_TYPE_MEDIUM] as $type) {
+			$dimensions = $this->getImageDimensions($type, $horizontal);
 			if (max($imageDimension) > max($dimensions)) {
 				$image->adaptiveResizeImage(...$dimensions);
 				$imageDimension = $dimensions;
 			}
 
-			$image->writeImage($this->getPhotoPath($albumId, $type, $thumbName));
+			$image->writeImage($this->getImagePath($albumId, $type, $thumbName));
 		}
 
-		$image->cropThumbnailImage(...$this->getPhotoDimensions(self::PHOTO_TYPE_SMALL));
-		$image->writeImage($this->getPhotoPath($albumId, self::PHOTO_TYPE_SMALL, $thumbName));
+		$image->cropThumbnailImage(...$this->getImageDimensions(self::IMAGE_TYPE_SMALL));
+		$image->writeImage($this->getImagePath($albumId, self::IMAGE_TYPE_SMALL, $thumbName));
 	}
 
-	private function fixPhotoOrientation(\Imagick &$image): bool
+	private function fixImageOrientation(\Imagick &$image): bool
 	{
 		switch ($image->getImageOrientation()) {
 			case \Imagick::ORIENTATION_TOPRIGHT:
@@ -154,16 +154,16 @@ final class ImageService
 				$image->setImageOrientation(\Imagick::ORIENTATION_TOPLEFT);
 				return true;
 			default: // Invalid orientation
-				return FALSE;
+				return false;
 		}
 	}
 
-	public function getPhotoDate(int $albumId, string $fileName): ?\DateTimeImmutable
+	public function getImageDate(int $albumId, string $fileName): ?\DateTimeImmutable
 	{
 		$ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
 		if (in_array($ext, ['jpg', 'jpeg'])) {
-			if ($exif = @exif_read_data($this->getPhotoPath($albumId, self::PHOTO_TYPE_ORIGINAL, $fileName)) ?: null) {
+			if ($exif = @exif_read_data($this->getImagePath($albumId, self::IMAGE_TYPE_ORIGINAL, $fileName)) ?: null) {
 				foreach (['DateTime', 'DateTimeOriginal', 'DateTimeDigitized', 'FileDateTime'] as $field) {
 					if (array_key_exists($field, $exif)) {
 						return new \DateTimeImmutable($exif[$field]);

@@ -4,7 +4,7 @@ namespace App\Commands;
 
 use App\Model\Album\AlbumsRepository;
 use App\Model\AlbumPhoto\AlbumPhotosRepository;
-use App\Photo\ImageService;
+use App\Image\ImageService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -13,7 +13,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class TransformImagesCommand extends Command
 {
 
-	private ImageService $photoService;
+	private ImageService $imageService;
 
 	private AlbumsRepository $albumsRepository;
 
@@ -21,14 +21,14 @@ final class TransformImagesCommand extends Command
 
 	/**
 	 * TransformImagesCommand constructor.
-	 * @param ImageService $photoService
+	 * @param ImageService $imageService
 	 * @param AlbumsRepository $albumsRepository
 	 */
-	public function __construct(ImageService $photoService, AlbumsRepository $albumsRepository)
+	public function __construct(ImageService $imageService, AlbumsRepository $albumsRepository)
 	{
 		parent::__construct();
 
-		$this->photoService = $photoService;
+		$this->imageService = $imageService;
 		$this->albumsRepository = $albumsRepository;
 	}
 
@@ -51,19 +51,18 @@ final class TransformImagesCommand extends Command
 		foreach ($albums as $album) {
 			$output->writeln($album->slug);
 
-			foreach ([ImageService::PHOTO_TYPE_LARGE, ImageService::PHOTO_TYPE_MEDIUM, ImageService::PHOTO_TYPE_SMALL, ImageService::PHOTO_TYPE_ORIGINAL] as $type) {
-				$path = $this->photoService->getPhotoPath($album->id, $type);
+			foreach ([ImageService::IMAGE_TYPE_LARGE, ImageService::IMAGE_TYPE_MEDIUM, ImageService::IMAGE_TYPE_SMALL, ImageService::IMAGE_TYPE_ORIGINAL] as $type) {
+				$path = $this->imageService->getImagePath($album->id, $type);
 
 				if (!file_exists($path)) {
-					//TODO
 					mkdir($path, 0755);
 					$output->writeln($path);
 				}
 			}
 
 			foreach ($album->photos as $photo) {
-				$oldPath = $this->photoService->getPhotoPath($album->id, null, $photo->filename);
-				$newPath = $this->photoService->getPhotoPath($album->id, ImageService::PHOTO_TYPE_ORIGINAL, $photo->filename);
+				$oldPath = $this->imageService->getImagePath($album->id, null, $photo->filename);
+				$newPath = $this->imageService->getImagePath($album->id, ImageService::IMAGE_TYPE_ORIGINAL, $photo->filename);
 
 				if (file_exists($oldPath)) {
 					$backupPath = $oldPath . '_';
@@ -77,7 +76,7 @@ final class TransformImagesCommand extends Command
 
 				$this->writeln($output, (string) $album->id, $photo->filename, $photo->thumbname);
 
-				$this->photoService->transformPhoto($album->id, $filePath, $photo->thumbname);
+				$this->imageService->transformImage($album->id, $filePath, $photo->thumbname);
 			}
 		}
 

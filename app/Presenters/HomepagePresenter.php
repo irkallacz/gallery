@@ -7,7 +7,7 @@ use App\Model\Album\Album;
 use App\Model\Person\PersonsRepository;
 use App\Model\Album\AlbumsRepository;
 use App\Model\AlbumPhoto\AlbumPhotosRepository;
-use App\Photo\ImageService;
+use App\Image\ImageService;
 use Nette\Application\UI\Form;
 use Nette\DI\Attributes\Inject;
 use Nette\Utils\Strings;
@@ -23,7 +23,7 @@ final class HomepagePresenter extends BasePresenter
 	public AlbumPhotosRepository $photosRepository;
 
 	#[Inject]
-	public ImageService $photoService;
+	public ImageService $imageService;
 
 	#[Inject]
 	public PersonsRepository $personsRepository;
@@ -42,15 +42,13 @@ final class HomepagePresenter extends BasePresenter
 			->limitBy(5);
 
 		if ($this->user->isLoggedIn()) {
-			$dateLast = new \DateTimeImmutable('2022-08-01');
-
-			$this->template->newAlbums = $this->albumsRepository->findBy(['modifiedAt>' => $dateLast])
+			$this->template->newAlbums = $this->albumsRepository->findBy(['modifiedAt>' => $this->user->identity->lastLogin])
 				->orderBy('modifiedAt', ICollection::DESC);
 
-			$this->template->newAlbumPhotos = $this->albumsRepository->findBy(['photos->createdAt>' => $dateLast])
+			$this->template->newPhotosAlbums = $this->albumsRepository->findBy(['photos->createdAt>' => $this->user->identity->lastLogin])
 				->orderBy('photos->createdAt', ICollection::DESC);
 
-			$this->template->dateLast = $dateLast;
+			$this->template->lastLogin = $this->user->identity->lastLogin;
 			$this->template->albumCount = $this->albumsRepository->findBy(['createdBy' => $this->user->id])->count();
 			$this->template->photoCount = $this->photosRepository->findBy(['createdBy' => $this->user->id])->count();
 		} else {
@@ -99,7 +97,7 @@ final class HomepagePresenter extends BasePresenter
 
 				$this->albumsRepository->persistAndFlush($album);
 
-				$this->photoService->createDirectories($album->id);
+				$this->imageService->createDirectories($album->id);
 
 				$this->flashMessage('Album bylo vytvořeno');
 				$this->redirect('Album:upload', $album->slug);

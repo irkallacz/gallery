@@ -1,9 +1,11 @@
 parameters:
-	photoDir: albums
-	photoDimensions:
+	imageDir: albums
+
+	imageDimensions:
 		small: [150, 100]
 		medium: [1024, 0]
 		large: [1920, 0]
+
 	oauth:
 		clientId: '62fa87e3d1a76-gallery'
 		clientSecret: 'uO5iZ-irO5s-vsX11YwZuEsyHm9sLvx0nP3'
