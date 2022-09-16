@@ -39,14 +39,14 @@
 				{if}
 					<h3>Fotografie</h3>
 					<ul>
-						<li n:foreach="$newAlbumPhotos as $newAlbumPhoto">
-							<a n:href="Album:view $newAlbumPhoto->slug">{$newAlbumPhoto->title}</a>
+						<li n:foreach="$newPhotosAlbums as $newPhotosAlbum">
+							<a n:href="Album:view $newPhotosAlbum->slug">{$newPhotosAlbum->title}</a>
 							<ul>
-								<li n:foreach="$newAlbumPhoto->photos->toCollection()->findBy(['createdAt>' => $dateLast])->limitBy(15)->fetchAll() as $newPhoto">
-									<a target="_blank" n:href="Album:view#$newPhoto->filename $newAlbumPhoto->slug">{$photo->filename}</a>
+								<li n:foreach="$newPhotosAlbum->findPhotosByCreatedAt($lastLogin)->limitBy(15) as $newPhoto">
+									<a target="_blank" n:href="Album:view#$newPhoto->filename $newPhotosAlbum->slug">{$photo->filename}</a>
 								</li>
 								<li n:if="$iterator->counter == 15">
-									<a target="_blank" n:href="Album:view $newAlbumPhoto->slug">Další ...</a>
+									<a target="_blank" n:href="Album:view $newPhotosAlbum->slug">Další ...</a>
 								</li>
 							</ul>
 						</li>

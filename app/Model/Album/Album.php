@@ -4,6 +4,7 @@ namespace App\Model\Album;
 
 use App\Model\Person\Person;
 use App\Model\AlbumPhoto\AlbumPhoto;
+use Nette\Security\Resource;
 use Nette\Utils\ArrayHash;
 use Nextras\Orm\Collection\ICollection;
 use Nextras\Orm\Entity\Entity;
@@ -25,7 +26,7 @@ use Nextras\Orm\Relationships\OneHasMany;
  * @property DateTimeImmutable			$modifiedAt {default now}
  * @property Person|null				$createdBy {m:1 Person, oneSided=true}
  */
-final class Album extends Entity
+final class Album extends Entity implements Resource
 {
 	public function findPhotos(bool $publicOnly = true): ICollection
 	{
@@ -42,13 +43,19 @@ final class Album extends Entity
 		$this->getRepository()->resetPhotosOrder($this->id, $greaterThen);
 	}
 
-	public function getLastPhotoByCreatedAt(\DateTimeInterface $greaterThen): ?AlbumPhoto
+	public function getLastPhotoByTakenAt(\DateTimeInterface $greaterThen): ?AlbumPhoto
 	{
 		return $this->photos->toCollection()
 			->findBy(['takenAt>' => $greaterThen])
 			->orderBy('takenAt')
 			->limitBy(1)
 			->fetch();
+	}
+
+	public function findPhotosByCreatedAt(\DateTimeInterface $greaterThen): ICollection
+	{
+		return $this->photos->toCollection()
+			->findBy(['createdAt>' => $greaterThen]);
 	}
 
 	public function getMaxPhotosOrder(): ?int
@@ -84,5 +91,10 @@ final class Album extends Entity
 			$this->modifiedAt = new \DateTimeImmutable();
 			$this->getRepository()->persistAndFlush($this);
 		}
+	}
+
+	function getResourceId(): string
+	{
+		return 'album';
 	}
 }
