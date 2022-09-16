@@ -1,12 +1,11 @@
 <?php
 
 
-namespace App\Authenticator;
+namespace App\Auth;
 
 
 use App\Model\Person\PersonsRepository;
 use Nette\Security\AuthenticationException;
-use Nette\Security\SimpleIdentity;
 use Nette\Security\User;
 
 final class EmailAuthenticator
@@ -33,17 +32,15 @@ final class EmailAuthenticator
 			throw new AuthenticationException('User not found.');
 		}
 
-		$roles = ['user'];
-		if ($person->rights) {
-			$roles = array_merge($roles, explode(',', $person->rights));
-		}
-
-		$this->user->login(new SimpleIdentity($person->id, $roles,
+		$this->user->login(new AuthUser($person->id, $person->getRoles(),
 			[
 				'name' => $person->name,
 				'surname' => $person->surname,
 				'mail' => $person->mail,
+				'lastLogin' => $person->getLastLogin()
 			]
 		));
+
+		$person->addNewLogin();
 	}
 }

@@ -3,7 +3,7 @@ services:
 		setup:
 			- addFilterLoader([App\Latte\LatteFilters(), load])
 
-	- App\Photo\ImageService(%wwwDir%, %photoDir%, %photoDimensions%)
+	- App\Image\ImageService(%wwwDir%, %imageDir%, %imageDimensions%)
 
 	oauth:
 		create: App\OAuth\OAuthService
@@ -11,7 +11,11 @@ services:
 
 	#commands
 	- App\Commands\TransformImagesCommand
-	#authenticators
-	- App\Authenticator\EmailAuthenticator
+	#authenticator
+	- App\Auth\EmailAuthenticator
+	#authorizator
+	- App\Auth\AuthorizatorFactory::create
 	#forms
 	- App\Forms\AlbumPhotoFormFactory
+	#menu
+	- App\Menu\Menu(%menu%)

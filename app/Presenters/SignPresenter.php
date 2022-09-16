@@ -3,7 +3,7 @@
 
 namespace App\Presenters;
 
-use App\Authenticator\EmailAuthenticator;
+use App\Auth\EmailAuthenticator;
 use App\OAuth\OAuthService;
 use Nette\Application\Attributes\Persistent;
 use Nette\DI\Attributes\Inject;
@@ -23,14 +23,22 @@ final class SignPresenter extends BasePresenter
 	public function actionIn()
 	{
 		if ($this->user->identity) {
-			if ($this->user->identity->token_expiration > time()) {
+			$token = $this->user->identity->token;
+			$tokenExpiration = $this->user->identity->tokenExpiration;
 
-				$this->authenticate($this->user->identity->token);
+			if (($token) && ($tokenExpiration > time())) {
+				if ($this->authenticate($token)) {
+					$this->user->identity->token = $token;
+					$this->user->identity->tokenExpiration = $tokenExpiration;
 
-				if ($this->backlink) {
-					$this->restoreRequest($this->backlink);
-				} else {
+					if ($this->backlink) {
+						$this->restoreRequest($this->backlink);
+					}
+
 					$this->redirect('Homepage:default');
+				} else {
+					$this->flashMessage('Přihlášení přes token se nezdařilo', 'error');
+					unset($this->user->identity->token);
 				}
 			}
 		}
@@ -43,27 +51,33 @@ final class SignPresenter extends BasePresenter
 	{
 		$response = $this->oauthService->sendAccessTokenRequest($code);
 
-		$this->authenticate($response->access_token);
+		if ($this->authenticate($response->access_token)) {
+			$this->user->identity->token = $response->access_token;
+			$this->user->identity->tokenExpiration = time() + $response->expires_in;
 
-		$this->user->identity->token = $response->access_token;
-		$this->user->identity->token_expiration = $response->expires_in;
-
-		if ($state) {
-			$this->restoreRequest($state);
+			if ($state) {
+				$this->restoreRequest($state);
+			}
 		} else {
-			$this->redirect('Homepage:default');
+			$this->flashMessage('Přihlášení přes token se nezdařilo', 'error');
 		}
+
+		$this->redirect('Homepage:default');
 	}
 
-	private function authenticate(string $accessToken)
+	private function authenticate(string $accessToken): bool
 	{
-		$response = $this->oauthService->sendUserRequest($accessToken);
-		//$this->user->setExpiration('+6 hours');
+		try {
+			$response = $this->oauthService->sendUserRequest($accessToken);
+		} catch (\Exception $exception) {
+			return false;
+		}
+
 		$this->authenticator->authenticate($response->email);
 
-		//TODO add login to database
-
 		$this->user->identity->mail = $response->email;
+
+		return true;
 	}
 
 	public function actionOut()
