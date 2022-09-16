@@ -19,13 +19,7 @@
 <body>
 <main id="main">
 <section id="top">
-	<nav>
-		<ul id="mainMenu" n:inner-foreach="$mainMenu as $item">
-			<li n:if="(!$item->role)or($user->isInRole($item->role))" n:class="$item->current ? current">
-				<a {if str_starts_with($item->link, 'http')}href="{$item->link}"{else}href="{link $item->link}"{/if}>{$item->title}</a>
-			</li>
-		</ul>
-	</nav>
+	{control menu}
 	<header id="header">
 		<a n:href="Homepage:" title="Vzs Jablonec Fotogalerie">
 			<img src="{$baseUrl}/img/vzs.svg" alt="VZS ČČK" width="80" height="80">
@@ -49,15 +43,15 @@
 </html>
 
 {define albumMenu}
-	<li n:if="$user->isInRole('user')">
+	<li n:if="$user->authorizator->isAllowed($user->identity, $album, 'upload')">
 		<a class="buttonLike" n:href="Album:upload $album->slug">přidat fotky</a></li>
-	<li n:if="$album->createdBy->id == $user->id">
+	<li n:if="$user->authorizator->isAllowed($user->identity, $album, 'delete')">
 		<a class="buttonLike confirm" n:href="Album:delete $album->id" data-confirm="Opravdu chcete vymazat toto album?">smazat album</a>
 	</li>
-	<li n:if="$user->isInRole('gallery')">
+	<li n:if="$user->authorizator->isAllowed($user->identity, $album, 'visibility')">
 		<a class="buttonLike" n:href="Album:visibility $album->id, !$album->public">{if $album->public}zneviditelnit{else}zviditelnit{/if}</a>
 	</li>
-	<li n:if="($album->createdBy->id == $user->id) || ($user->isInRole('gallery'))">
+	<li n:if="$user->authorizator->isAllowed($user->identity, $album, 'edit')">
 		<a class="buttonLike" n:href="Album:edit $album->slug">upravit album</a>
 	</li>
 {/define}

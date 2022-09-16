@@ -3,20 +3,17 @@
 
 namespace App\Presenters;
 
+use App\Menu\Menu;
 use Nette\Application\UI\Presenter;
-use Nette\Utils\ArrayHash;
+use Nette\DI\Attributes\Inject;
 
 abstract class BasePresenter extends Presenter
 {
-	protected function beforeRender() {
-		parent::beforeRender();
+	#[Inject]
+	public Menu $menu;
 
-		$this->template->mainMenu = ArrayHash::from([
-			['title' => 'novinky',		'link' => 'Homepage:default',				'role' => NULL, 	'current' => $this->isLinkCurrent('Homepage:default')	],
-			['title' => 'alba',			'link' => 'Homepage:albums',				'role' => NULL, 	'current' => ($this->isLinkCurrent('Album:*') || $this->isLinkCurrent('Homepage:albums'))	],
-			['title' => 'přihlášení',	'link' => 'Sign:in',						'role' => 'guest',	'current' => $this->isLinkCurrent('Sign:*')	],
-			['title' => 'intranet',		'link' => 'https://member.vzs-jablonec.lh',	'role' => 'user',	'current' => false	],
-			['title' => 'odhlášení',	'link' => 'Sign:out',						'role' => 'user',	'current' => $this->isLinkCurrent('Sign:*')	],
-		]);
+	protected function createComponentMenu(): Menu
+	{
+		return $this->menu;
 	}
 }

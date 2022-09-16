@@ -15,6 +15,32 @@ parameters:
 		resourceUrl: 'https://account.vzs-jablonec.lh/oauth/user'
 		#resource_method: 'GET'
 
+	menu:
+		news:
+			title: novinky
+			action: Homepage:default
+			current: Homepage:default
+		albums:
+			title: alba
+			action: Homepage:albums
+			current:
+				- Homepage:albums
+				- Album:*
+		sighIn:
+			title: přihlášení
+			action: Sign:in
+			current: Sign:*
+			loggedIn: false
+		intranet:
+			title: intranet
+			link: https://member.vzs-jablonec.lh
+			loggedIn: true
+		sighOut:
+			title: odhlášení
+			action: Sign:out
+			current: Sign:*
+			loggedIn: true
+
 application:
 	errorPresenter: Error
 	mapping:
@@ -34,13 +60,19 @@ routing:
 		'album/<slug \d+-[\w-]+>/<action view|edit|upload>': Album:view
 		'<presenter>/<action>[/<id>]': Homepage:default
 
-di:
-	export:
-		parameters: no
-		tags: no
+http:
+	headers:
+		X-Content-Type-Options: nosniff
+	csp:
+		script-src:
+			- self
+			- nonce
+		form-action: self
+		frame-ancestors: none
+		base-uri: none
 
 extensions:
-	- Contributte\FormMultiplier\DI\MultiplierExtension
+	multiplier: Contributte\FormMultiplier\DI\MultiplierExtension
 	dbal: Nextras\Dbal\Bridges\NetteDI\DbalExtension
 	nextras.orm: Nextras\Orm\Bridges\NetteDI\OrmExtension
 	console: Contributte\Console\DI\ConsoleExtension(%consoleMode%)
