@@ -9,5 +9,5 @@ ul.photoList li input.selector { position: absolute; top: 0; left: 0; z-index: 2
 input.album-slug { border-color: transparent;}
 input.album-slug:focus { border-color: silver; }
 .album-text { width: 98%; font-family: Verdana,Arial,Helvetica,Calibri,sans-serif; font-size: 1em; height: 1.5em;}
-#fistrRow { line-height: 2em}
+#firstRow { line-height: 2em}
 .date { text-align: center;}

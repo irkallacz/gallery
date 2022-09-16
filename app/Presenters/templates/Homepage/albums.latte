@@ -9,7 +9,7 @@
 	<header class="row">
 		<h2 n:block="title">Alba</h2>
 
-		<nav n:if="$user->isLoggedIn()">
+		<nav n:if="$user->authorizator->isAllowed($user->identity, 'album', 'add')">
 			<ul class="menu">
 				<li><button id="show-album-form-button" class="buttonLike">přidat album</button></li>
 			</ul>
@@ -38,16 +38,7 @@
 
 {block scripts}
 	<script src="{$baseUrl}/js/naja.js" type="application/javascript"></script>
-	<script src="{$baseUrl}/js/loadmore.js" type="application/javascript"></script>
-	<script>
-		let dialog = document.getElementById('album-form');
-		document.getElementById('show-album-form-button').addEventListener('click', function () {
-			dialog.showModal();
-		});
-
-		document.getElementById('close-album-form-button').addEventListener('click', function () {
-			dialog.close();
-		});
-	</script>
+	<script src="{$baseUrl}/js/load-more.js" type="application/javascript"></script>
+	<script src="{$baseUrl}/js/add-album.js" type="application/javascript"></script>
 {/block}
 
