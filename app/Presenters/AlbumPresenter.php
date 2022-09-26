@@ -21,6 +21,7 @@ use Nette\Security\AuthenticationException;
 use Nextras\Orm\Entity\AbstractEntity;
 use Nextras\Orm\Exception\NoResultException;
 use Tracy\Debugger;
+use function Symfony\Component\String\b;
 
 final class AlbumPresenter extends BasePresenter
 {
@@ -43,23 +44,24 @@ final class AlbumPresenter extends BasePresenter
 
 	public function actionView(string $slug, string $hash = null): void
 	{
-		$publicOnly = !$this->user->isLoggedIn();
-
 		try {
-			$this->getAlbumBySlug($slug, 'view', false);
-		} catch (ForbiddenRequestException $exception) {
-			$publicOnly = true;
-			if ($hash !== $this->album->hash) {
-				if (!$this->album->public) {
-					$backlink = $this->storeRequest();
-					$this->redirect('Sign:in', ['backlink' => $backlink]);
-				} else {
-					throw $exception;
-				}
-			}
+			$this->album = $this->albumsRepository->getBySlug($slug);
+		} catch (NoResultException $exception) {
+			throw new BadRequestException('Album do not exists');
 		}
 
-		if ($hash == $this->album->hash) {
+		$publicOnly = !$this->user->isLoggedIn();
+
+		if ($hash !== $this->album->hash) {
+			if ((!$this->album->public) && (!$this->user->isLoggedIn())) {
+				$backlink = $this->storeRequest();
+				$this->redirect('Sign:in', ['backlink' => $backlink]);
+			}
+
+			if (!$this->user->authorizator->isAllowed($this->user->identity ?? 'guest', $this->album, 'view')) {
+				throw new ForbiddenRequestException('You dont have rights for this action');
+			}
+		} else {
 			$publicOnly = false;
 		}
 
@@ -69,6 +71,7 @@ final class AlbumPresenter extends BasePresenter
 
 	public function renderView(string $slug, string $hash = null)
 	{
+		$this->template->album = $this->album;
 		$this->template->thumbPath = $this->imageService->getRelativeImagePath($this->album->id, ImageService::IMAGE_TYPE_SMALL);
 		$this->template->mediumPath = $this->imageService->getRelativeImagePath($this->album->id, ImageService::IMAGE_TYPE_MEDIUM);
 		$this->template->largePath = $this->imageService->getRelativeImagePath($this->album->id, ImageService::IMAGE_TYPE_LARGE);
@@ -187,7 +190,7 @@ final class AlbumPresenter extends BasePresenter
 		}
 	}
 
-	private function getAlbumBySlug(string $slug, string $action, bool $checkLogin = true): void
+	private function getAlbumBySlug(string $slug, string $action): void
 	{
 		try {
 			$this->album = $this->albumsRepository->getBySlug($slug);
@@ -197,7 +200,7 @@ final class AlbumPresenter extends BasePresenter
 
 		$this->template->album = $this->album;
 
-		if (($checkLogin) && (!$this->album->public) && (!$this->user->isLoggedIn())) {
+		if (!$this->user->isLoggedIn()) {
 			$backlink = $this->storeRequest();
 			$this->redirect('Sign:in', ['backlink' => $backlink]);
 		}
@@ -207,7 +210,7 @@ final class AlbumPresenter extends BasePresenter
 		}
 	}
 
-	private function getAlbumById(int $id, string $action = 'view'): Album
+	private function getAlbumById(int $id, string $action): Album
 	{
 		if (!$this->user->isLoggedIn()) {
 			throw new ForbiddenRequestException('You need to be log in');
