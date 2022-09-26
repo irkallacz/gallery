@@ -1,7 +1,7 @@
 {
   "name": "gallery",
   "version": "1.0.0",
-  "description": "Nette Web Project =================",
+  "description": "Irkalla web gallery",
   "main": "index.js",
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack",
