@@ -4,6 +4,7 @@
 namespace App\Model\Person;
 
 use App\Model\Log\Log;
+use App\Model\Right\Right;
 use Nextras\Orm\Collection\ICollection;
 use Nextras\Orm\Entity\Entity;
 use DateTimeImmutable;
@@ -38,7 +39,7 @@ final class Person extends Entity
 	{
 		$roles = [];
 
-		if (in_array('gallery', $this->rights)) {
+		if (in_array('gallery', $this->rights->toCollection()->fetchPairs('id', 'name'))) {
 			$roles[] = 'gallery';
 		}
 
