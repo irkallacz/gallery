@@ -8,6 +8,7 @@ use Nextras\Orm\Collection\ICollection;
 use Nextras\Orm\Entity\Entity;
 use DateTimeImmutable;
 use Nextras\Orm\Relationships\OneHasMany;
+use Nextras\Orm\Relationships\ManyHasMany;
 use Tracy\Debugger;
 
 /**
@@ -16,8 +17,8 @@ use Tracy\Debugger;
  * @property string 					$surname
  * @property string 					$mail
  * @property-read string				$fullName {virtual}
- * @property-read  string|null 			$role
- * @property-read array|null 			$rights {wrapper \App\Model\SetsWrapper}
+ * @property-read int 					$role {enum self::ROLE_*}
+ * @property ManyHasMany|Right[]		$rights {m:m Right, isMain=true, oneSided=true}}
  * @property OneHasMany|Log[]			$logs {1:m Log::$createdBy}
  */
 
@@ -41,7 +42,7 @@ final class Person extends Entity
 			$roles[] = 'gallery';
 		}
 
-		if (in_array($this->role, ['member', 'editor', 'admin'])) {
+		if ($this->role > self::ROLE_USER) {
 			$roles[] = 'member';
 		} else {
 			$roles[] = 'user';
@@ -75,6 +76,4 @@ final class Person extends Entity
 		$this->getRepository()->persistAndFlush($this);
 
 	}
-
-
 }

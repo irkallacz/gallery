@@ -4,6 +4,7 @@
 namespace App\Auth;
 
 
+use App\Model\Person\Person;
 use App\Model\Person\PersonsRepository;
 use Nette\Security\AuthenticationException;
 use Nette\Security\User;
@@ -26,7 +27,7 @@ final class EmailAuthenticator
 
 	public function authenticate(string $email): void
 	{
-		$person = $this->personsRepository->getBy(['mail' => $email]);
+		$person = $this->personsRepository->getBy(['mail' => $email, 'role>=' => Person::ROLE_USER]);
 
 		if (!$person) {
 			throw new AuthenticationException('User not found.');
