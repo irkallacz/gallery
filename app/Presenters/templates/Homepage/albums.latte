@@ -16,7 +16,7 @@
 		</nav>
 	</header>
 
-	<dialog id="album-form">
+	<dialog id="album-form" n:if="$user->authorizator->isAllowed($user->identity, 'album', 'add')">
 		{control albumForm}
 	</dialog>
 
@@ -39,6 +39,6 @@
 {block scripts}
 	<script src="{$baseUrl}/js/naja.js" type="application/javascript"></script>
 	<script src="{$baseUrl}/js/load-more.js" type="application/javascript"></script>
-	<script src="{$baseUrl}/js/add-album.js" type="application/javascript"></script>
+	<script n:if="$user->authorizator->isAllowed($user->identity, 'album', 'add')" src="{$baseUrl}/js/add-album.js" type="application/javascript"></script>
 {/block}
 
