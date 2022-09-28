@@ -13,6 +13,8 @@ final class ImageService
 	const IMAGE_TYPE_MEDIUM = 'medium';
 	const IMAGE_TYPE_SMALL = 'small';
 
+	const IMAGE_MIME_TYPES = ['image/gif', 'image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/avif'];
+
 	private string $wwwDir;
 	private string $albumsDir;
 	private array $imageDimensions;
@@ -156,6 +158,11 @@ final class ImageService
 			default: // Invalid orientation
 				return false;
 		}
+	}
+
+	public function isImage(FileUpload $file): bool
+	{
+		return in_array($file->getContentType(), self::IMAGE_MIME_TYPES, true);
 	}
 
 	public function getImageDate(int $albumId, string $fileName): ?\DateTimeImmutable

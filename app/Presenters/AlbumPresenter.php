@@ -143,49 +143,55 @@ final class AlbumPresenter extends BasePresenter
 		if ($fileUpload = $httpRequest->getFile('file')) {
 			if ($fileUpload->hasFile()) {
 				$httpResponse = $this->getHttpResponse();
-				if (!$fileUpload->isImage()) {
+
+				if (!$fileUpload->isOk()) {
+					$httpResponse->setCode(IResponse::S422_UNPROCESSABLE_ENTITY);
+					$this->sendJson(['error' => 'Chyba při náhrávání souboru']);
+				}
+
+				if (!$this->imageService->isImage($fileUpload)) {
 					$httpResponse->setCode(IResponse::S422_UNPROCESSABLE_ENTITY);
 					$this->sendJson(['error' => 'Vybraný soubor není obrázek']);
-				} elseif ($fileUpload->isOk()) {
-					$hash = md5_file($fileUpload->getTemporaryFile());
-
-					if ($photo = $this->photosRepository->getByHash($this->album->id, $hash)) {
-						$httpResponse->setCode(IResponse::S422_UNPROCESSABLE_ENTITY);
-						$this->sendJson(['error' => 'Fotografie již v albu existuje']);
-					} else {
-						list($fileName, $thumbName) = $this->imageService->uploadImage($fileUpload, $this->album->id);
-
-						//Pokud existuje datum vytvoření fotografie a jsou zde fotografie staršího data, změni jejich pořadí,
-						// jinak je to poslední fotka a patří na konec
-						$updateOrder = false;
-						if (!($takenAt = $this->imageService->getImageDate($this->album->id, $fileName))) {
-							$takenAt = new \DateTimeImmutable();
-						} elseif ($last = $this->album->getLastPhotoByTakenAt($takenAt)) {
-							$updateOrder = true;
-							$order = $last->order;
-						}
-
-						if (!$updateOrder) {
-							$order = $this->album->getMaxPhotosOrder() + 1;
-						}
-
-						$photo = new AlbumPhoto();
-						$photo->filename = $fileName;
-						$photo->thumbname = $thumbName;
-						$photo->hash = $hash;
-						$photo->createdBy = $this->personsRepository->getByIdChecked($this->user->id);
-						$photo->album = $this->album;
-						$photo->takenAt = $takenAt;
-						$photo->order = $order;
-						$this->photosRepository->persistAndFlush($photo);
-
-						if ($updateOrder) {
-							$this->album->updatePhotosOrder($takenAt);
-						}
-
-						$this->sendJson(['success' => 'Nahrán soubor: ' . $fileName]);
-					}
 				}
+
+				$hash = md5_file($fileUpload->getTemporaryFile());
+
+				if ($photo = $this->photosRepository->getByHash($this->album->id, $hash)) {
+					$httpResponse->setCode(IResponse::S422_UNPROCESSABLE_ENTITY);
+					$this->sendJson(['error' => 'Fotografie již v albu existuje']);
+				}
+
+				list($fileName, $thumbName) = $this->imageService->uploadImage($fileUpload, $this->album->id);
+
+				//Pokud existuje datum vytvoření fotografie a jsou zde fotografie staršího data, změni jejich pořadí,
+				// jinak je to poslední fotka a patří na konec
+				$updateOrder = false;
+				if (!($takenAt = $this->imageService->getImageDate($this->album->id, $fileName))) {
+					$takenAt = new \DateTimeImmutable();
+				} elseif ($last = $this->album->getLastPhotoByTakenAt($takenAt)) {
+					$updateOrder = true;
+					$order = $last->order;
+				}
+
+				if (!$updateOrder) {
+					$order = $this->album->getMaxPhotosOrder() + 1;
+				}
+
+				$photo = new AlbumPhoto();
+				$photo->filename = $fileName;
+				$photo->thumbname = $thumbName;
+				$photo->hash = $hash;
+				$photo->createdBy = $this->personsRepository->getByIdChecked($this->user->id);
+				$photo->album = $this->album;
+				$photo->takenAt = $takenAt;
+				$photo->order = $order;
+				$this->photosRepository->persistAndFlush($photo);
+
+				if ($updateOrder) {
+					$this->album->updatePhotosOrder($takenAt);
+				}
+
+				$this->sendJson(['success' => 'Nahrán soubor: ' . $fileName]);
 			}
 		}
 	}
