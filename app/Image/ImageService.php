@@ -13,7 +13,7 @@ final class ImageService
 	const IMAGE_TYPE_MEDIUM = 'medium';
 	const IMAGE_TYPE_SMALL = 'small';
 
-	const IMAGE_MIME_TYPES = ['image/gif', 'image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/avif'];
+	const IMAGE_MIME_TYPES = ['image/gif', 'image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif', 'image/avif'];
 
 	private string $wwwDir;
 	private string $albumsDir;
@@ -167,15 +167,12 @@ final class ImageService
 
 	public function getImageDate(int $albumId, string $fileName): ?\DateTimeImmutable
 	{
-		$ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+		$image = new \Imagick($this->getImagePath($albumId, self::IMAGE_TYPE_ORIGINAL, $fileName));
+		$info = $image->getImageProperties();
 
-		if (in_array($ext, ['jpg', 'jpeg'])) {
-			if ($exif = @exif_read_data($this->getImagePath($albumId, self::IMAGE_TYPE_ORIGINAL, $fileName)) ?: null) {
-				foreach (['DateTime', 'DateTimeOriginal', 'DateTimeDigitized', 'FileDateTime'] as $field) {
-					if (array_key_exists($field, $exif)) {
-						return new \DateTimeImmutable($exif[$field]);
-					}
-				}
+		foreach (['exif:DateTime', 'exif:DateTimeDigitized', 'exif:DateTimeOriginal', 'exif:GPSDateStamp', 'date:create', 'date:modify'] as $key) {
+			if ($date = $info[$key] ?? null) {
+				return new \DateTimeImmutable($date);
 			}
 		}
 
