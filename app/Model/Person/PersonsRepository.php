@@ -14,7 +14,7 @@ final class PersonsRepository extends Repository
 		return [Person::class];
 	}
 
-	public function findByRole(int $role = Person::ROLE_MEMBER): ICollection | array
+	public function findByRole(int $role = Person::ROLE_MEMBER): ICollection|array
 	{
 		return $this->findBy(['role>' => $role]);
 	}
@@ -24,5 +24,10 @@ final class PersonsRepository extends Repository
 		return $this->findByRole($role)
 			->orderBy(['surname' => ICollection::ASC, 'name' => ICollection::ASC])
 			->fetchPairs('id', 'fullName');
+	}
+
+	public function getByMail(string $mail): ?Person
+	{
+		return $this->getBy([ICollection::OR, 'mail' => $mail, 'mail2' => $mail]);
 	}
 }

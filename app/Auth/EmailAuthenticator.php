@@ -26,7 +26,7 @@ final class EmailAuthenticator
 
 	public function authenticate(string $email): void
 	{
-		$person = $this->personsRepository->getBy(['mail' => $email]);
+		$person = $this->personsRepository->getByMail($email);
 
 		if (!$person) {
 			throw new AuthenticationException('User not found.');
