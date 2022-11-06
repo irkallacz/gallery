@@ -17,6 +17,7 @@ use Tracy\Debugger;
  * @property string 					$name
  * @property string 					$surname
  * @property string 					$mail
+ * @property string 					$mail2
  * @property-read string				$fullName {virtual}
  * @property-read int 					$role {enum self::ROLE_*}
  * @property ManyHasMany|Right[]		$rights {m:m Right, isMain=true, oneSided=true}}

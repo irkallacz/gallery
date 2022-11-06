@@ -7,4 +7,5 @@ www/assets
 www/albums
 www/favicon.ico
 composer.lock
+package-lock.json
 config/local.neon

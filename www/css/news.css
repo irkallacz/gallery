@@ -1,0 +1,5 @@
+#showcase { display: none; }
+@media screen and (min-width: 800px) {
+    #showcase { display: block; }
+    .carousel__slide { text-align: center; list-style: none; }
+}

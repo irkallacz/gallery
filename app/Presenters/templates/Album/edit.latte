@@ -48,12 +48,12 @@
 
 		<ul id="edit-list" class="photoList" n:inner-foreach="$album->photos as $photo">
 			<li>
-				<label n:name="photos-$photo->id-selected" n:class="(($album->public)&&(!$photo->public)) ? 'hidden'" {if $photo->createdBy}title="Autor: {$photo->createdBy->fullName}"{/if}>
+				<label n:name="photos-{$photo->id}-selected" n:class="(($album->public)&&(!$photo->public)) ? 'hidden'" {if $photo->createdBy}title="Autor: {$photo->createdBy->fullName}"{/if}>
 					{include image image => $photo, class => image}
 				</label>
-				<input n:name="photos-$photo->id-selected" class="selector">
+				<input n:name="photos-{$photo->id}-selected" class="selector">
 				<div>
-					<input n:name="photos-$photo->id-summary" class="title">
+					<input n:name="photos-{$photo->id}-summary" class="title">
 				</div>
 			</li>
 		</ul>
