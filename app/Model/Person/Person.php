@@ -15,6 +15,7 @@ use Tracy\Debugger;
  * @property string 					$name
  * @property string 					$surname
  * @property string 					$mail
+ * @property string 					$mail2
  * @property-read string				$fullName {virtual}
  * @property-read  string|null 			$role
  * @property-read array|null 			$rights {wrapper \App\Model\SetsWrapper}
