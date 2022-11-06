@@ -10,9 +10,9 @@ parameters:
 		clientId: '62fa87e3d1a76-gallery'
 		clientSecret: 'uO5iZ-irO5s-vsX11YwZuEsyHm9sLvx0nP3'
 		redirectUrl: 'https://gallery.vzs-jablonec.lh/sign/o-auth'
-		authorizeUrl: 'https://account.vzs-jablonec.lh/oauth/auth'
+		authorizeUrl: 'https://account.vzs-jablonec.lh/oauth/authorize'
 		tokenUrl: 'https://account.vzs-jablonec.lh/oauth/token'
-		resourceUrl: 'https://account.vzs-jablonec.lh/oauth/user'
+		resourceUrl: 'https://account.vzs-jablonec.lh/oauth/me'
 		#resource_method: 'GET'
 
 	menu:
