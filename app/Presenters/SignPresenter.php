@@ -73,7 +73,7 @@ final class SignPresenter extends BasePresenter
 			return false;
 		}
 
-		$this->authenticator->authenticate($response->email);
+		$this->authenticator->authenticate($response->user_email);
 
 		$this->user->identity->mail = $response->user_email;
 
