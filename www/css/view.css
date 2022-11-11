@@ -1,0 +1,6 @@
+.photoList { display: flex; flex-flow: row wrap; align-content: flex-start; }
+.photoList li { margin: 3px; position: relative; }
+.fancybox__caption { display: none; }
+@media screen and (min-width: 800px) {
+    .fancybox__caption { display: block; }
+}
