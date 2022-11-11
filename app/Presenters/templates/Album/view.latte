@@ -2,10 +2,7 @@
 
 {block head}
 	<link rel="stylesheet" href="{$baseUrl}/assets/app.bundle.css">
-	<style n:syntax="off">
-        .photoList { display: flex; flex-flow: row wrap; align-content: flex-start; }
-        .photoList li { margin: 3px; position: relative;}
-	</style>
+	<link rel="stylesheet" href="{$baseUrl}/css/view.css">
 {/block}
 
 {block scripts}
@@ -31,7 +28,7 @@
 		<a data-fancybox="album" href="{$baseUrl}/{$originalPath}/{$photo->filename}" n:class="($album->public && (!$photo->public)) ? hidden"
 		   data-src="{$baseUrl}/{$largePath}/{$photo->thumbname}"
 		   data-srcset="{$baseUrl}/{$mediumPath}/{$photo->thumbname} 1024w, {$baseUrl}/{$largePath}/{$photo->thumbname} 1920w"
-		   data-slug="{$photo->filename}" data-caption="{$photo->summary} {if $photo->takenAt}{$photo->takenAt|datetime}{/if}">
+		   data-slug="{$photo->filename}" data-caption="{$photo->summary} {if $photo->takenAt}{$photo->takenAt|date:"d.m.Y H:i"}{/if}">
 			<img src="{$baseUrl}/{$thumbPath}/{$photo->thumbname}" width="150" height="100" alt="{$photo->filename}">
 		</a>
 	</li>

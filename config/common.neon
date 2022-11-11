@@ -64,6 +64,9 @@ http:
 	headers:
 		X-Content-Type-Options: nosniff
 	csp:
+		default-src:
+			- self
+			- 'data:'
 		script-src:
 			- self
 			- nonce

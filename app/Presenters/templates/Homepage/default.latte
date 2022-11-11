@@ -1,9 +1,9 @@
 {templateType App\Template\HomepageTemplate}
 
 {block head}
+	<link rel="stylesheet" href="{$baseUrl}/assets/app.bundle.css">
+	<link rel="stylesheet" href="{$baseUrl}/css/photo.photolist.css">
 	<link rel="stylesheet" href="{$baseUrl}/css/news.css">
-	<link rel="stylesheet" href="{$baseUrl}/css/photo.photolist.css" type="text/css">
-	<link rel="stylesheet" href="{$baseUrl}/assets/app.bundle.css" type="text/css">
 {/block}
 
 {block scripts}
@@ -17,7 +17,9 @@
 	<div>
 		<ul id="showcase" class="carousel">
 			<li n:foreach="$photos as $photo" class="carousel__slide">
-				<a target="_blank" n:href="Album:view#$photo->filename $photo->album->slug"><img height="350" data-lazy-src="{$baseUrl}/albums/{$photo->album->id}/medium/{$photo->thumbname}"></a>
+				<a target="_blank" n:href="Album:view#$photo->filename $photo->album->slug">
+					<img height="350" data-lazy-src="{$baseUrl}/albums/{$photo->album->id}/medium/{$photo->thumbname}">
+				</a>
 			</li>
 		</ul>
 	</div>
