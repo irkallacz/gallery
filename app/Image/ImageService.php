@@ -112,6 +112,9 @@ final class ImageService
 			if (max($imageDimension) > max($dimensions)) {
 				$image->adaptiveResizeImage(...$dimensions);
 				$imageDimension = $dimensions;
+			} elseif ($type == self::IMAGE_TYPE_MEDIUM) {
+				link($this->getImagePath($albumId, self::IMAGE_TYPE_LARGE, $thumbName), $this->getImagePath($albumId, self::IMAGE_TYPE_MEDIUM, $thumbName));
+				continue;
 			}
 
 			$image->writeImage($this->getImagePath($albumId, $type, $thumbName));
