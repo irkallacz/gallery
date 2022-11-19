@@ -41,6 +41,10 @@ parameters:
 			current: Sign:*
 			loggedIn: true
 
+php:
+	date.timezone: Europe/Prague
+	zlib.output_compression: yes
+
 application:
 	errorPresenter: Error
 	mapping:
@@ -55,6 +59,7 @@ security:
 		expiration: 6 hours
 
 routing:
+	cache: true
 	routes:
 		'album': Homepage:albums
 		'album/<slug \d+-[\w-]+>/<action view|edit|upload>': Album:view
@@ -75,10 +80,10 @@ http:
 		base-uri: none
 
 extensions:
+	console: Contributte\Console\DI\ConsoleExtension(%consoleMode%)
 	multiplier: Contributte\FormMultiplier\DI\MultiplierExtension
 	dbal: Nextras\Dbal\Bridges\NetteDI\DbalExtension
 	nextras.orm: Nextras\Orm\Bridges\NetteDI\OrmExtension
-	console: Contributte\Console\DI\ConsoleExtension(%consoleMode%)
 
 dbal:
 	driver: mysqli
