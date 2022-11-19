@@ -19,7 +19,9 @@
 <body>
 <main id="main">
 <section id="top">
-	{control menu}
+	{if $presenter instanceof \App\Presenters\BasePresenter}
+		{control menu}
+	{/if}
 	<header id="header">
 		<a n:href="Homepage:" title="Vzs Jablonec Fotogalerie">
 			<img src="{$baseUrl}/img/vzs.svg" alt="VZS ČČK" width="80" height="80">
@@ -72,7 +74,7 @@
 
 		<span class="no-wrap"><b>{if $album->public}Viditelné veřejnosti{else}Neviditelné pro veřejnost{/if}</b></span>
 	</div>
-	<div n:if="$album->createdBy" class="right flex-right">
+	<div n:if="($user->isLoggedIn())&&($album->createdBy)" class="right flex-right">
 		<span class="no-wrap member">{$album->createdBy->fullName}</span>
 	</div>
 </footer>
