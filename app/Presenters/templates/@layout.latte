@@ -72,7 +72,7 @@
 
 		<span class="no-wrap"><b>{if $album->public}Viditelné veřejnosti{else}Neviditelné pro veřejnost{/if}</b></span>
 	</div>
-	<div n:if="$album->createdBy" class="right flex-right">
+	<div n:if="($user->isLoggedIn())&&($album->createdBy)" class="right flex-right">
 		<span class="no-wrap member">{$album->createdBy->fullName}</span>
 	</div>
 </footer>
