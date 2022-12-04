@@ -26,6 +26,7 @@
 <ul class="photoList" n:inner-foreach="$photos as $photo">
 	<li n:class="(($album->public) and (!$photo->public)) ? 'hidden'">
 		<a data-fancybox="album" href="{$baseUrl}/{$originalPath}/{$photo->filename}" n:class="($album->public && (!$photo->public)) ? hidden"
+		   data-download-src="{$baseUrl}/{$originalPath}/{$photo->filename}"
 		   data-src="{$baseUrl}/{$largePath}/{$photo->thumbname}"
 		   data-srcset="{$baseUrl}/{$mediumPath}/{$photo->thumbname} 1024w, {$baseUrl}/{$largePath}/{$photo->thumbname} 1920w"
 		   data-slug="{$photo->filename}" data-caption="{$photo->summary} {if $photo->takenAt}{$photo->takenAt|date:"d.m.Y H:i"}{/if}">
