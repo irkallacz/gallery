@@ -1,5 +1,5 @@
 deploy:
-  image: alpine:latest
+  image: lgatica/openssh-client:latest
   script:
     # check for required tools
     - command -v ssh-agent >/dev/null
