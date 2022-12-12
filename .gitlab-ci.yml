@@ -1,19 +1,9 @@
 deploy:
-  image: lgatica/openssh-client:latest
   script:
-    # check for required tools
-    - command -v ssh-agent >/dev/null
-    # start SSH agent, valid for 30 minutes
-    - eval $(ssh-agent -s -t 1800)
-    # import SSH key
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    # setup SSH config dir (.known_hosts)
-    - mkdir -p ~/.ssh; chmod 700 ~/.ssh
-    - ssh ${TARGET_USER_DEVEL}@${TARGET_HOST} mkdir -pv "${TARGET_PATH_DEVEL,,}"
     - rsync -vrlptD
       --delete
       --exclude '.git*'
-      . "${TARGET_USER_DEVEL}@${TARGET_HOSTL}:${TARGET_PATH_DEVEL,,}"
+      . "$TARGET_PATH_DEVEL"
 
   only:
     - production
