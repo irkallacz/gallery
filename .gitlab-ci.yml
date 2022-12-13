@@ -2,7 +2,7 @@ deploy:
   script:
     - rsync -vrlptD
       --delete
-      --exclude-file '.gitignore'
+      --exclude-from '.gitignore'
       --exclude '.git*'
       --exclude 'session/'
       . "$TARGET_PATH_DEVEL"
