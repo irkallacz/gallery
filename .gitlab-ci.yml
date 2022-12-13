@@ -2,8 +2,13 @@ deploy:
   script:
     - rsync -vrlptD
       --delete
+      --exclude-file '.gitignore'
       --exclude '.git*'
+      --exclude 'session/'
       . "$TARGET_PATH_DEVEL"
+
+    - rm -r "$TARGET_PATH_DEVEL/temp/cache"
+    - rm -r "$TARGET_PATH_DEVEL/log/*"
 
   only:
     - production
