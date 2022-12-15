@@ -1,10 +1,11 @@
 deploy:
   script:
-    - rsync -vrlptD
+    - rsync -vrl
       --delete
       --exclude-from '.gitignore'
       --exclude '.git*'
       --exclude 'session/'
+      --chown '$TARGET_USER_DEVEL:$TARGET_USER_DEVEL'
       . "$TARGET_PATH_DEVEL"
 
     - rm -r "$TARGET_PATH_DEVEL/temp/cache"
