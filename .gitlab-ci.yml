@@ -1,15 +1,19 @@
 deploy:
   script:
-    - rsync -vrl
+    - mkdir "./temp"
+    - mkdir "./log"
+    - rsync -vrlt
       --delete
-      --exclude-from '.gitignore'
       --exclude '.git*'
-      --exclude 'session/'
-      --chown $TARGET_USER_DEVEL:$TARGET_USER_DEVEL
-      . "$TARGET_PATH_DEVEL"
-
-    - rm -r "$TARGET_PATH_DEVEL/temp/cache"
-    - rm -r "$TARGET_PATH_DEVEL/log/*"
+      --exclude 'session'
+      --exclude 'node_modules'
+      --exclude 'www/assets'
+      --exclude 'www/albums'
+      --exclude 'www/favicon.ico'
+      --exclude 'composer.lock'
+      --exclude 'package-lock.json'
+      --exclude 'config/local.neon'
+      . {$TARGET_USER_DEVEL}@localhost:{$TARGET_PATH_DEVEL}
 
   only:
     - production
