@@ -13,7 +13,7 @@ deploy:
       --exclude 'composer.lock'
       --exclude 'package-lock.json'
       --exclude 'config/local.neon'
-      . $TARGET_USER_DEVEL@localhost:"{$TARGET_PATH_DEVEL}"
+      . $TARGET_USER_DEVEL@localhost:"$TARGET_PATH_DEVEL"
 
   only:
     - production
