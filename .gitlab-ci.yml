@@ -1,4 +1,7 @@
-deploy:
+deploy_testing:
+  stage: deploy
+  environment:
+    name: testing
   script:
     - mkdir "./temp"
     - mkdir "./log"
@@ -6,6 +9,7 @@ deploy:
       --delete
       --exclude '.git*'
       --exclude 'session'
+      --exclude 'vendor'
       --exclude 'node_modules'
       --exclude 'www/assets'
       --exclude 'www/albums'
@@ -14,6 +18,29 @@ deploy:
       --exclude 'package-lock.json'
       --exclude 'config/local.neon'
       . $TARGET_USER_DEVEL@localhost:"$TARGET_PATH_DEVEL"
+  only:
+    - testing
+
+deploy_production:
+  stage: deploy
+  environment:
+    name: production
+  script:
+    - mkdir "./temp"
+    - mkdir "./log"
+    - rsync -vrlt
+      --delete
+      --exclude '.git*'
+      --exclude 'session'
+      --exclude 'vendor'
+      --exclude 'node_modules'
+      --exclude 'www/assets'
+      --exclude 'www/albums'
+      --exclude 'www/favicon.ico'
+      --exclude 'composer.lock'
+      --exclude 'package-lock.json'
+      --exclude 'config/local.neon'
+      . $TARGET_USER@localhost:"$TARGET_PATH"
 
   only:
     - production
