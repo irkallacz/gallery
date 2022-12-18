@@ -62,13 +62,13 @@
 <footer class="popis row">
 	<div>
 		<span class="no-wrap"><b>Počet fotografií:</b> {$album->findPhotos($publicOnly)->count()}</span>
-		<span class="no-wrap" title="{$album->date|date:'%d. %B %Y'}">
-			<b>Datum:</b> <time datetime="{$album->date|date:'Y-m-d'}">{$album->date|timeagoinwords}</time>
+		<span class="no-wrap" title="{$album->date|datelocal}">
+			<b>Datum:</b> <time datetime="{$album->date|datelocal}">{$album->date|timeagoinwords}</time>
 		</span>
-		<span class="no-wrap" title="{$album->createdAt|date:'%d. %B %Y %H:%M'}">
+		<span class="no-wrap" title="{$album->createdAt|datetimelocal}">
 			<b>Přidáno:</b> <time datetime="{$album->createdAt|datetimec}">{$album->createdAt|timeagoinwords}</time>
 		</span>
-		<span class="no-wrap" title="{$album->modifiedAt|date:'%d. %B %Y %H:%M'}" n:if="$album->createdAt != $album->modifiedAt">
+		<span class="no-wrap" title="{$album->modifiedAt|datetimelocal}" n:if="$album->createdAt != $album->modifiedAt">
 			<b>Upraveno:</b> <time datetime="{$album->modifiedAt|datetimec}">{$album->modifiedAt|timeagoinwords}</time>
 		</span>
 

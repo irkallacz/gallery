@@ -12,9 +12,14 @@ final class LatteFilters
 		return null;
 	}
 
-	public static function datetime(\DateTimeInterface $date): string
+	public static function datelocal(\DateTimeInterface $date): string
 	{
-		return $date->format('d.m.Y H:i:s');
+		return \IntlDateFormatter::formatObject($date, 'dd. MMMM yyyy', 'cs_CZ');
+	}
+
+	public static function datetimelocal(\DateTimeInterface $date): string
+	{
+		return \IntlDateFormatter::formatObject($date, 'dd. MMMM yyyy HH:mm', 'cs_CZ');
 	}
 
 	public static function datetimec(\DateTimeInterface $date): string
